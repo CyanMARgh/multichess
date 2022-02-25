@@ -1,65 +1,20 @@
 #include <cstdio>
-#include <SFML/Graphics.hpp>
-#include <vector>
-#include "box2.h"
-
-//enum class scaleMode {
-//	bindTopLeft, stretchXY
-//};
-//
-//class window;
-//
-//class uielement {
-//protected:
-//	scaleMode sm;
-//	box2 boxOrigin;
-//	box2 boxScaled;
-//
-//	void reshape(box2 newBox) {
-//		boxScaled = newBox;
-//	}
-//	void reshape(box2 parentBoxOrigin, box2 parentBoxScaled) {
-//		if (sm == scaleMode::bindTopLeft) {
-//			sf::Vector2f delta = parentBoxScaled.bottomLeft - parentBoxOrigin.bottomLeft;
-//			boxScaled = {boxOrigin.bottomLeft + delta, boxOrigin.topRight + delta};
-//		} else {
-//			boxScaled = parentBoxScaled / parentBoxOrigin * boxOrigin;
-//		}
-//	}
-//
-//	virtual void draw(window*) = 0;
-//	friend class window;
-//};
-//
-//class window {
-//	std::vector<uielement*> parts;
-//	sf::RenderWindow rw;
-//
-//	void drawText() { }
-//	void drawImage(std::string, box2) { }
-//
-//	void drawAll() {
-//		for (auto p : parts) {
-//			p->draw(this);
-//		}
-//	}
-//public:
-//	window(const std::string& name, sf::Vector2f size) {
-//		rw.create(sf::VideoMode(size.x, size.y), name);
-//	}
-//	void addUIPart(uielement* uielptr) {
-//		parts.push_back(uielptr);
-//	}
-//	void startRenderCycle() {
-//
-//	}
-//};
+#include "window.h"
 
 int main() {
-	box2 A(0, 0, 2, 3);
-	box2 B(0, 0, 1, 2);
+	window mainWindow("chess?", sf::Vector2f(800, 800));
+	uiImage p0 = uiImage({0, 0, 400, 400}, scaleMode::bindBL, "src3.png");
+	uiImage p1 = uiImage({400, 400, 800, 800}, scaleMode::bindTR, "src3.png");
+	uiTilemap p2 = uiTilemap({0, 400, 400, 800}, scaleMode::bindTL, "src3.png", {2, 2});
 
-	(A * B).print();
+	uint32_t* ids = new uint32_t[25]{0, 1, 2, 3, 0, 1, 2, 3, 0, 0, 1, 2, 3, 0, 1, 2, 3, 0, 0, 1, 2, 3, 0, 1, 2};
+	p2.setIndexes(ids, sf::Vector2u(5, 5));
+	delete[] ids;
 
+	mainWindow.addUIPart(&p0);
+	mainWindow.addUIPart(&p1);
+	mainWindow.addUIPart(&p2);
+
+	mainWindow.startRenderCycle();
 	return 0;
 }

@@ -30,3 +30,26 @@ box2 operator*(const box2& boxl, const box2& boxr) {
 box2 operator/(const box2& boxl, const box2& boxr) {
 	return boxl * boxr.inv();
 }
+
+float box2::left() const {
+	return bottomLeft.x;
+}
+float box2::top() const {
+	return topRight.y;
+}
+float box2::right() const {
+	return topRight.x;
+}
+float box2::bottom() const {
+	return bottomLeft.y;
+}
+
+sf::Vector2f box2::topLeft() const {
+	return {bottomLeft.x, topRight.y};
+}
+sf::Vector2f box2::bottomRight() const {
+	return {topRight.x, bottomLeft.y};
+}
+box2::operator sf::IntRect() const {
+	return sf::IntRect(bottomLeft.x, bottomLeft.y, topRight.x, topRight.y);
+}
