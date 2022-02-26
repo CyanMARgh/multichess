@@ -3,6 +3,17 @@
 #include "window.h"
 #include "cstring"
 
+class window;
+
+class sprite {
+	sf::Texture tex;
+	sf::Sprite spr;
+	sf::Vector2u s0;
+public:
+	sprite(std::string src, sf::Vector2u gridSize = {1, 1}, uint32_t id = 0);
+	void draw(window* w, box2 zone);
+};
+
 enum class scaleMode {
 	bindBL,
 	bindTR,
@@ -10,8 +21,6 @@ enum class scaleMode {
 	bindBR,
 	scaleXY
 };
-
-class window;
 
 class uiElement {
 protected:
@@ -28,18 +37,21 @@ public:
 class uiImage : public uiElement {
 protected:
 	std::string src;
-	void draw(window*) override;
+	sprite spr;
+	void draw(window*) override; // -> call spr.draw
 public:
 	uiImage(box2 zone, scaleMode sm, std::string src);
 };
 
-class uiTilemap : public  uiElement {
+class uiTilemap : public uiElement {
 	std::string src;
 	uint32_t* map;
-	sf::Vector2u count, metrics;
+	sf::Vector2u srcGridSize, gridSize;
+	sprite** sprites;
 public:
-	uiTilemap(box2 zone, scaleMode sm, std::string src, sf::Vector2u count);
-	void draw(window*) override;
-	void setIndexes(const uint32_t* map, sf::Vector2u metrics);
+	uiTilemap(box2 zone, scaleMode sm, std::string src, sf::Vector2u srcGridSize);
+	~uiTilemap();
+	void draw(window*) override; // -> call spr.draw
+	void setIndexes(const uint32_t* map, sf::Vector2u _gridSize);
 	size_t size() const;
 };
