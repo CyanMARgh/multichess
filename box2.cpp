@@ -53,3 +53,7 @@ sf::Vector2f box2::bottomRight() const {
 box2::operator sf::IntRect() const {
 	return sf::IntRect(bottomLeft.x, bottomLeft.y, topRight.x, topRight.y);
 }
+
+bool box2::isInside(sf::Vector2f p) const {
+	return p.x > bottomLeft.x && p.y > bottomLeft.y && p.x < topRight.x && p.y < topRight.y;
+}

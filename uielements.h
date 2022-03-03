@@ -2,6 +2,7 @@
 #include "box2.h"
 #include "window.h"
 #include "cstring"
+#include <functional>
 
 class window;
 
@@ -22,6 +23,12 @@ enum class scaleMode {
 	scaleXY
 };
 
+enum class mouseEvent {
+	pressing,
+	holding,
+	release
+};
+
 class uiElement {
 protected:
 	scaleMode sm;
@@ -32,26 +39,37 @@ public:
 	void reshape(box2 parentBoxOrigin, box2 parentBoxScaled);
 	void reshape(sf::Vector2f parentSizeOrigin, sf::Vector2f parentBoxScaled);
 	virtual void draw(window*) = 0;
+	virtual void onClick(sf::Vector2f pos, mouseEvent event);
 };
 
 class uiImage : public uiElement {
 protected:
-	std::string src;
 	sprite spr;
-	void draw(window*) override; // -> call spr.draw
+	void draw(window*) override;
 public:
 	uiImage(box2 zone, scaleMode sm, std::string src);
 };
 
 class uiTilemap : public uiElement {
-	std::string src;
 	uint32_t* map;
 	sf::Vector2u srcGridSize, gridSize;
 	sprite** sprites;
+
+	void draw(window*) override;
+	size_t size() const;
 public:
 	uiTilemap(box2 zone, scaleMode sm, std::string src, sf::Vector2u srcGridSize);
 	~uiTilemap();
-	void draw(window*) override; // -> call spr.draw
 	void setIndexes(const uint32_t* map, sf::Vector2u _gridSize);
-	size_t size() const;
+};
+
+class uiButton : public uiElement {
+	bool isPressed;
+	sprite sprf, sprp;
+	std::function<void()> action;
+
+	void draw(window*) override;
+	void onClick(sf::Vector2f pos, mouseEvent event) override ;
+public:
+	uiButton(box2 zone, scaleMode sm, std::string srcFree, std::string srcPressed, std::function<void()> action);
 };

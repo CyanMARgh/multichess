@@ -23,6 +23,8 @@ struct box2 {
 	sf::Vector2f bottomRight() const;
 	void print();
 	operator sf::IntRect() const;
+
+	bool isInside(sf::Vector2f p) const;
 };
 
 sf::Vector2f operator*(const box2& box, const sf::Vector2f& p);

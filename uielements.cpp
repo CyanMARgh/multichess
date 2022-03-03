@@ -5,7 +5,7 @@ sprite::sprite(std::string src, sf::Vector2u gridSize, uint32_t id) {
 	img.loadFromFile(src);
 	sf::Vector2u s = img.getSize();
 	s0 = {s.x / gridSize.x, s.y / gridSize.y};
-	auto rect = sf::IntRect(s0.x * (id % gridSize.x), s0.y * (id / gridSize.x), s0.x, s0.y);
+	sf::IntRect rect(s0.x * (id % gridSize.x), s0.y * (id / gridSize.x), s0.x, s0.y);
 	tex.loadFromImage(img, rect);
 	spr.setTexture(tex);
 }
@@ -39,9 +39,9 @@ void uiElement::reshape(box2 parentBoxOrigin, box2 parentBoxScaled) {
 void uiElement::reshape(sf::Vector2f parentSizeOrigin, sf::Vector2f parentBoxScaled) {
 	reshape({{0, 0}, parentSizeOrigin}, {{0, 0}, parentBoxScaled});
 }
+void uiElement::onClick(sf::Vector2f pos, mouseEvent event) { }
 
 uiImage::uiImage(box2 zone, scaleMode sm, std::string src) :uiElement(zone, sm), spr(src) {
-	this->src = src;
 }
 void uiImage::draw(window* w) {
 	spr.draw(w, boxScaled);
@@ -54,7 +54,6 @@ uiTilemap::uiTilemap(box2 zone, scaleMode sm, std::string src, sf::Vector2u srcG
 	for (int i = 0; i < srcGridSize.x * srcGridSize.y; i++) {
 		sprites[i] = new sprite(src, srcGridSize, i);
 	}
-	this->src = src;
 }
 void uiTilemap::draw(window* w) {
 	sf::Vector2u i;
@@ -83,5 +82,22 @@ void uiTilemap::setIndexes(const uint32_t* _map, sf::Vector2u _gridSize) {
 }
 size_t uiTilemap::size() const {
 	return gridSize.x * gridSize.y;
+}
+
+void uiButton::draw(window* w) {
+	(isPressed ? sprp : sprf).draw(w, boxScaled);
+}
+void uiButton::onClick(sf::Vector2f pos, mouseEvent event) {
+	if (event == mouseEvent::pressing) {
+		isPressed = true;
+	} else if (event == mouseEvent::release){
+		isPressed = false;
+		if(boxScaled.isInside(pos)) action();
+	}
+}
+uiButton::uiButton(box2 zone, scaleMode sm, std::string srcFree, std::string srcPressed, std::function<void()> action) :
+		uiElement(zone, sm), sprf(srcFree), sprp(srcPressed) {
+	this->action = action;
+	isPressed = false;
 }
 
