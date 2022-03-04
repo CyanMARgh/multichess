@@ -3,6 +3,7 @@
 #include "window.h"
 #include "cstring"
 #include <functional>
+#include <cstdint>
 
 class window;
 
@@ -39,7 +40,7 @@ public:
 	void reshape(box2 parentBoxOrigin, box2 parentBoxScaled);
 	void reshape(sf::Vector2f parentSizeOrigin, sf::Vector2f parentBoxScaled);
 	virtual void draw(window*) = 0;
-	virtual void onClick(sf::Vector2f pos, mouseEvent event);
+	virtual bool onClick(sf::Vector2f pos, mouseEvent event);
 };
 
 class uiImage : public uiElement {
@@ -69,7 +70,7 @@ class uiButton : public uiElement {
 	std::function<void()> action;
 
 	void draw(window*) override;
-	void onClick(sf::Vector2f pos, mouseEvent event) override ;
+	bool onClick(sf::Vector2f pos, mouseEvent event) override ;
 public:
 	uiButton(box2 zone, scaleMode sm, std::string srcFree, std::string srcPressed, std::function<void()> action);
 };

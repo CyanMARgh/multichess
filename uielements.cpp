@@ -39,7 +39,10 @@ void uiElement::reshape(box2 parentBoxOrigin, box2 parentBoxScaled) {
 void uiElement::reshape(sf::Vector2f parentSizeOrigin, sf::Vector2f parentBoxScaled) {
 	reshape({{0, 0}, parentSizeOrigin}, {{0, 0}, parentBoxScaled});
 }
-void uiElement::onClick(sf::Vector2f pos, mouseEvent event) { }
+bool uiElement::onClick(sf::Vector2f pos, mouseEvent event) {
+	return false;
+}
+
 
 uiImage::uiImage(box2 zone, scaleMode sm, std::string src) :uiElement(zone, sm), spr(src) {
 }
@@ -87,13 +90,20 @@ size_t uiTilemap::size() const {
 void uiButton::draw(window* w) {
 	(isPressed ? sprp : sprf).draw(w, boxScaled);
 }
-void uiButton::onClick(sf::Vector2f pos, mouseEvent event) {
+bool uiButton::onClick(sf::Vector2f pos, mouseEvent event) {
 	if (event == mouseEvent::pressing) {
-		isPressed = true;
+		if(boxScaled.isInside(pos)) {
+			isPressed = true;
+			return true;
+		}
 	} else if (event == mouseEvent::release){
 		isPressed = false;
-		if(boxScaled.isInside(pos)) action();
+		if(boxScaled.isInside(pos)) {
+			action();
+			return true;
+		}
 	}
+	return false;
 }
 uiButton::uiButton(box2 zone, scaleMode sm, std::string srcFree, std::string srcPressed, std::function<void()> action) :
 		uiElement(zone, sm), sprf(srcFree), sprp(srcPressed) {

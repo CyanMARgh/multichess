@@ -1,4 +1,4 @@
-set(SOURCE main.cpp box2.cpp window.cpp window.h uielements.cpp uielements.h)
+set(SOURCE main.cpp window.cpp uielements.cpp box2.cpp chess.h)
 set(PROJECT_NAME multichess)
 
 cmake_minimum_required(VERSION 3.19)

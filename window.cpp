@@ -17,6 +17,9 @@ void window::addUIPart(uiElement* uielptr) {
 	uielptr->reshape(sizeOrigin, sizeScaled);
 }
 void window::startRenderCycle() {
+	//bool IsButtonPressed = false;
+	uiElement* pressed = NULL;
+
 	while (rw.isOpen()) {
 		sf::Event e;
 		while (rw.pollEvent(e)) {
@@ -27,6 +30,22 @@ void window::startRenderCycle() {
 				rw.setView(sf::View(sf::FloatRect({}, sizeScaled)));
 				for (auto part : parts) {
 					part->reshape(sizeOrigin, sizeScaled);
+				}
+			} else if (e.type == sf::Event::MouseButtonPressed) {
+				sf::Vector2f pos = (sf::Vector2f)sf::Mouse::getPosition(rw);
+				pos.y = sizeScaled.y - pos.y;
+				for (auto el : parts) {
+					if (el->onClick(pos, mouseEvent::pressing)) {
+						pressed = el;
+						break;
+					}
+				}
+			} else if (e.type == sf::Event::MouseButtonReleased) {
+				if(pressed) {
+					sf::Vector2f pos = (sf::Vector2f)sf::Mouse::getPosition(rw);
+					pos.y = sizeScaled.y - pos.y;
+					pressed->onClick(pos, mouseEvent::release);
+					pressed = NULL;
 				}
 			}
 		}
