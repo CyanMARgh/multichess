@@ -10,23 +10,23 @@ void window::drawAll() {
 
 window::window(const std::string& name, sf::Vector2f size) {
 	sizeScaled = sizeOrigin = size;
-	rw.create(sf::VideoMode(size.x, size.y), name);
+	rw.create(sf::VideoMode((uint)size.x, (uint)size.y), name);
 }
-void window::addUIPart(uiElement* uielptr) {
-	parts.push_back(uielptr);
-	uielptr->reshape(sizeOrigin, sizeScaled);
+void window::addUIPart(uiElement& uiel) {
+	parts.push_back(&uiel);
+	uiel.reshape(sizeOrigin, sizeScaled);
 }
 void window::startRenderCycle() {
 	//bool IsButtonPressed = false;
-	uiElement* pressed = NULL;
+	uiElement* pressed = nullptr;
 
 	while (rw.isOpen()) {
-		sf::Event e;
+		sf::Event e{};
 		while (rw.pollEvent(e)) {
 			if (e.type == sf::Event::Closed) {
 				rw.close();
 			} else if (e.type == sf::Event::Resized) {
-				sizeScaled = sf::Vector2f(e.size.width, e.size.height);
+				sizeScaled = sf::Vector2f((float)e.size.width, (float)e.size.height);
 				rw.setView(sf::View(sf::FloatRect({}, sizeScaled)));
 				for (auto part : parts) {
 					part->reshape(sizeOrigin, sizeScaled);
@@ -45,7 +45,7 @@ void window::startRenderCycle() {
 					sf::Vector2f pos = (sf::Vector2f)sf::Mouse::getPosition(rw);
 					pos.y = sizeScaled.y - pos.y;
 					pressed->onClick(pos, mouseEvent::release);
-					pressed = NULL;
+					pressed = nullptr;
 				}
 			}
 		}

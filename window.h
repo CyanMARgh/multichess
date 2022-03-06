@@ -15,7 +15,7 @@ public:
 	void drawAll();
 
 	window(const std::string& name, sf::Vector2f size);
-	void addUIPart(uiElement* uielptr);
+	void addUIPart(uiElement& uiel);
 	void startRenderCycle();
 
 	friend class sprite;
