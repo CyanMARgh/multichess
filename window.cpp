@@ -1,53 +1,54 @@
 #include "window.h"
 
+sf::Vector2f window::getActualSize(sf::Vector2f s) const {
+	//if (hv) {
+	//s.x = std::max(s.x, minSize);
+	//s.y = std::min(s.y, s.x * minQ);
+	//} else {
+	//s.y = std::max(s.y, minSize);
+	//s.x = std::min(s.x, s.y * minQ);
+	//}
+	return s;
+}
 void window::drawAll() {
 	rw.clear();
-	for (auto p : parts) {
-		p->draw(this);
-	}
+	scene->draw(this);
 	rw.display();
 }
-
-window::window(const std::string& name, sf::Vector2f size) {
+window::window(const std::string& name, sf::Vector2f size, float minSize, float minQ, bool hv) {
+	this->minSize = minSize, this->minQ = minQ, this->hv = hv;
 	sizeScaled = sizeOrigin = size;
 	rw.create(sf::VideoMode((uint)size.x, (uint)size.y), name);
 }
-void window::addUIPart(uiElement& uiel) {
-	parts.push_back(&uiel);
+void window::setUIScene(uiElement& uiel) {
+	scene = &uiel;
 	uiel.reshape(sizeOrigin, sizeScaled);
 }
 void window::startRenderCycle() {
-	//bool IsButtonPressed = false;
-	uiElement* pressed = nullptr;
+	if (scene == nullptr)throw std::invalid_argument("scene not set");
+	bool pressed = false;
 
 	while (rw.isOpen()) {
 		sf::Event e{};
+		sf::Vector2f pos = (sf::Vector2f)sf::Mouse::getPosition(rw);
+		pos.y = sizeScaled.y - pos.y;
 		while (rw.pollEvent(e)) {
 			if (e.type == sf::Event::Closed) {
 				rw.close();
 			} else if (e.type == sf::Event::Resized) {
 				sizeScaled = sf::Vector2f((float)e.size.width, (float)e.size.height);
 				rw.setView(sf::View(sf::FloatRect({}, sizeScaled)));
-				for (auto part : parts) {
-					part->reshape(sizeOrigin, sizeScaled);
-				}
+				scene->reshape(sizeOrigin, sizeScaled);
 			} else if (e.type == sf::Event::MouseButtonPressed) {
-				sf::Vector2f pos = (sf::Vector2f)sf::Mouse::getPosition(rw);
-				pos.y = sizeScaled.y - pos.y;
-				for (auto el : parts) {
-					if (el->onClick(pos, mouseEvent::pressing)) {
-						pressed = el;
-						break;
-					}
-				}
+				scene->onMouseEvent(pos, mouseEvent::pressing);
+				pressed = true;
 			} else if (e.type == sf::Event::MouseButtonReleased) {
-				if(pressed) {
-					sf::Vector2f pos = (sf::Vector2f)sf::Mouse::getPosition(rw);
-					pos.y = sizeScaled.y - pos.y;
-					pressed->onClick(pos, mouseEvent::release);
-					pressed = nullptr;
-				}
+				scene->onMouseEvent(pos, mouseEvent::release);
+				pressed = false;
 			}
+		}
+		if(pressed) {
+			scene->onMouseEvent(pos, mouseEvent::holding);
 		}
 		drawAll();
 	}

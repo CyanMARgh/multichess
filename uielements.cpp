@@ -65,13 +65,65 @@ void uiElement::reshape(box2 parentBoxOrigin, box2 parentBoxScaled) {
 void uiElement::reshape(sf::Vector2f parentSizeOrigin, sf::Vector2f parentBoxScaled) {
 	reshape({{0, 0}, parentSizeOrigin}, {{0, 0}, parentBoxScaled});
 }
-bool uiElement::onClick(sf::Vector2f pos, mouseEvent event) {
+bool uiElement::onMouseEvent(sf::Vector2f pos, mouseEvent event) {
 	return false;
+}
+bool uiElement::isInside(sf::Vector2f pos) const {
+	return boxScaled.isInside(pos);
+}
+
+box2 uiGroup::getSubBox(uint i) {
+	return boxScaled;
+}
+void uiGroup::draw(window* w) {
+	if (visible) {
+		for (uiElement* e : parts) {
+			if (e) e->draw(w);
+		}
+	}
+}
+bool uiGroup::onMouseEvent(sf::Vector2f pos, mouseEvent event) {
+	if (event == mouseEvent::pressing) {
+		if (boxScaled.isInside(pos)) {
+			for (uint i = 0, n = parts.size(); i < n; i++) {
+				if (parts[i] && parts[i]->onMouseEvent(pos, event)) {
+					pressedPart = (int)i;
+					return true;
+				}
+			}
+		}
+	} else {
+		if (pressedPart > -1 && parts[pressedPart]) parts[pressedPart]->onMouseEvent(pos, event);
+		if (event == mouseEvent::release) pressedPart = -1;
+	}
+	return false;
+}
+void uiGroup::reshape(box2 parentBoxOrigin, box2 parentBoxScaled) {
+	uiElement::reshape(parentBoxOrigin, parentBoxScaled);
+	for (uint i = 0, n = parts.size(); i < n; i++) {
+		if (parts[i]) {
+			parts[i]->reshape(boxOrigin, getSubBox(i));
+		}
+	}
+}
+uiGroup::uiGroup(box2 zone, scaleMode sm, uint count) :uiElement(zone, sm) {
+	parts.resize(count, nullptr);
+}
+void uiGroup::addUIPart(uiElement& uiel) {
+	parts.push_back(&uiel);
+}
+void uiGroup::setUIPart(uint i, uiElement& uiel) {
+	if (i >= parts.size()) {
+		parts.resize(i + 1, nullptr);
+	}
+	parts[i] = &uiel;
 }
 
 uiImage::uiImage(box2 zone, scaleMode sm, const std::string& src) :uiElement(zone, sm), spr(src) { }
 void uiImage::draw(window* w) {
-	spr.draw(w, boxScaled);
+	if (visible) {
+		spr.draw(w, boxScaled);
+	}
 }
 
 uiTilemap::uiTilemap(box2 zone, scaleMode sm, const std::string& src, sf::Vector2u srcGridSize) :uiElement(zone, sm) {
@@ -83,12 +135,14 @@ uiTilemap::uiTilemap(box2 zone, scaleMode sm, const std::string& src, sf::Vector
 	}
 }
 void uiTilemap::draw(window* w) {
-	sf::Vector2u i;
-	int j = 0;
-	for (i.y = 0; i.y < gridSize.y; i.y++) {
-		for (i.x = 0; i.x < gridSize.x; i.x++, j++) {
-			auto box = boxScaled * box2(sf::Vector2f(i) / sf::Vector2f(gridSize), (sf::Vector2f(i) + sf::Vector2f(1, 1)) / sf::Vector2f(gridSize));
-			sprites[map[j]]->draw(w, box);
+	if (visible) {
+		sf::Vector2u i;
+		int j = 0;
+		for (i.y = 0; i.y < gridSize.y; i.y++) {
+			for (i.x = 0; i.x < gridSize.x; i.x++, j++) {
+				auto box = boxScaled * box2(sf::Vector2f(i) / sf::Vector2f(gridSize), (sf::Vector2f(i) + sf::Vector2f(1, 1)) / sf::Vector2f(gridSize));
+				sprites[map[j]]->draw(w, box);
+			}
 		}
 	}
 }
@@ -113,20 +167,27 @@ size_t uiTilemap::size() const {
 }
 
 void uiButton::draw(window* w) {
-	(isPressed ? sprp : sprf).draw(w, boxScaled);
+	if (visible) {
+		(isPressed ? sprp : sprf).draw(w, boxScaled);
+	}
 }
-bool uiButton::onClick(sf::Vector2f pos, mouseEvent event) {
-	if (event == mouseEvent::pressing) {
-		if (boxScaled.isInside(pos)) {
-			isPressed = true;
-			return true;
+bool uiButton::onMouseEvent(sf::Vector2f pos, mouseEvent event) {
+	switch (event) {
+		case mouseEvent::pressing: {
+			if (boxScaled.isInside(pos)) {
+				isPressed = true;
+				return true;
+			}
+			break;
 		}
-	} else if (event == mouseEvent::release) {
-		isPressed = false;
-		if (boxScaled.isInside(pos)) {
-			action();
-			return true;
+		case mouseEvent::release : {
+			if (isPressed && boxScaled.isInside(pos)) {
+				action();
+			}
+			isPressed = false;
+			break;
 		}
+		case mouseEvent::holding:break;
 	}
 	return false;
 }
@@ -135,69 +196,12 @@ uiButton::uiButton(box2 zone, scaleMode sm, const std::string& srcFree, const st
 	isPressed = false;
 }
 
-void uiScene::draw(window* w) {
-	if (visible) {
-		for (auto& part : parts) {
-			part->draw(w);
-		}
-	}
-}
-bool uiScene::onClick(sf::Vector2f pos, mouseEvent event) {
-	if (clickable) {
-		for (auto& part : parts) {
-			if (part->onClick(pos, event)) {
-				return true;
-			}
-		}
-	}
-	return false;
-}
-void uiScene::reshape(box2 parentBoxOrigin, box2 parentBoxScaled) {
-	uiElement::reshape(parentBoxOrigin, parentBoxScaled);
-	for (auto& p : parts) {
-		p->reshape(boxOrigin, boxScaled);
-	}
-}
-uiScene::uiScene(bool isActive, box2 zone) :uiElement(zone, scaleMode::scaleXY), parts({}) {
+uiScene::uiScene(bool isActive, box2 zone) :uiGroup(zone, scaleMode::fullZone) {
 	visible = isActive;
-	clickable = isActive;
-}
-void uiScene::addUIPart(uiElement& uiel) {
-	parts.push_back(&uiel);
 }
 void uiScene::changeToNewScene(uiScene* other) {
-	clickable = visible = false;
-	other->visible = other->clickable = true;
-}
-
-void uiSlicer::draw(window* w) {
-	for (auto& part : parts) {
-		if (part) {
-			part->draw(w);
-		}
-	}
-}
-bool uiSlicer::onClick(sf::Vector2f pos, mouseEvent event) {
-	for (auto& part : parts) {
-		if (part && part->onClick(pos, event)) {
-			return true;
-		}
-	}
-	return false;
-}
-void uiSlicer::reshape(box2 parentBoxOrigin, box2 parentBoxScaled) {
-	uiElement::reshape(parentBoxOrigin, parentBoxScaled);
-	for (uint i = 0, n = parts.size(); i < n; i++) {
-		if (parts[i]) {
-			parts[i]->reshape(boxOrigin, getSubBox(i));
-		}
-	}
-}
-void uiSlicer::setUIPart(uint i, uiElement& uiel) {
-	parts[i] = &uiel;
-}
-uiSlicer::uiSlicer(int partsCount, box2 zone, scaleMode sm) :uiElement(zone, sm) {
-	parts = std::vector<uiElement*>(partsCount, nullptr);
+	visible = false;
+	other->visible = true;
 }
 
 box2 uiSideCut::getSubBox(uint i) {
@@ -229,6 +233,6 @@ box2 uiSideCut::getSubBox(uint i) {
 		}
 	}
 }
-uiSideCut::uiSideCut(sf::Vector2f subSize, box2 zone, scaleMode sm) :uiSlicer(3, zone, sm) {
+uiSideCut::uiSideCut(sf::Vector2f subSize, box2 zone, scaleMode sm) :uiGroup(zone, sm, 3) {
 	this->subSize = subSize;
 }
