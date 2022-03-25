@@ -4,16 +4,43 @@
 #include "cstring"
 #include <functional>
 #include <cstdint>
+#include <unordered_set>
 
 class window;
+struct spriteparam {
+	std::string s;
+	sf::Vector2u gm = {1, 1};
+	int i = 0;
+};
 class sprite {
-	sf::Texture tex;
-	sf::Sprite spr;
-	sf::Vector2u s0;
+	struct base {
+		std::string name;
+		sf::Texture tex;
+		sf::Sprite spr;
+		sf::Vector2u s0;
+		base(const sf::Image& img, const std::string& name, sf::IntRect rect);
+		base& operator=(const base&) = delete;
+		void draw(window* w, box2 zone);
+	};
+	base* sbptr;
 public:
-	explicit sprite(const std::string& src, sf::Vector2u gridSize = {1, 1}, uint32_t id = 0);
+	static std::unordered_set<std::unique_ptr<base>> loadedSprites;
+	static void loadSpriteSheet(const std::string& src, sf::Vector2u gridMetrics);
+	sprite();
+	explicit sprite(const std::string& src, sf::Vector2u srcGrifSize, uint32_t id);
+	sprite(const spriteparam& par);
 	void draw(window* w, box2 zone);
 };
+class textSprite {
+	sf::Font font;
+	sf::Text text;
+	std::string stext;
+public:
+	textSprite(const std::string& fontSrc, const std::string& textSrc);
+	void setText(const std::string& data);
+	void draw(window* w, box2 zone);
+};
+
 enum class scaleMode {
 	bindBL,
 	bindTR,
@@ -66,29 +93,56 @@ protected:
 	sprite spr;
 	void draw(window* w) final;
 public:
-	uiImage(box2 zone, scaleMode sm, const std::string& src);
+	uiImage(box2 zone, scaleMode sm, const spriteparam& src);
+};
+class uiText : public uiElement {
+protected:
+	textSprite spr;
+	void draw(window* w) final;
+public:
+	uiText(box2 zone, scaleMode sm, const std::string& textSrc, const std::string& fontSrc);
 };
 class uiTilemap : public uiElement {
-	uint32_t* map;
-	sf::Vector2u srcGridSize, gridSize;
-	sprite** sprites;
+	std::vector<uint32_t> map;
+	sf::Vector2u gridSize;
+	std::vector<sprite> tilemap;
 
 	void draw(window* w) final;
 	size_t size() const;
 public:
-	uiTilemap(box2 zone, scaleMode sm, const std::string& src, sf::Vector2u srcGridSize);
-	~uiTilemap();
-	void setIndexes(const uint32_t* map, sf::Vector2u _gridSize);
+	uiTilemap(box2 zone, scaleMode sm, const std::string& src, sf::Vector2u srcGridSize, uint32_t beg = 0, uint32_t end = -1);
+	void setIndexes(std::vector<uint32_t> map, sf::Vector2u _gridSize);
+	void setByIndex(uint32_t cellId, uint32_t texId);
 };
 class uiButton : public uiElement {
 	bool isPressed;
 	sprite sprf, sprp;
-	std::function<void()> action;
-
-	void draw(window* w) final;
+	std::function<void(sf::Vector2f)> action;
 	bool onMouseEvent(sf::Vector2f pos, mouseEvent event) final;
+protected:
+	void draw(window* w) override;
 public:
-	uiButton(box2 zone, scaleMode sm, const std::string& srcFree, const std::string& srcPressed, std::function<void()> action);
+	uiButton(box2 zone, scaleMode sm, const spriteparam& parFree, const spriteparam& parPressed, std::function<void(sf::Vector2f)> action);
+	uiButton(box2 zone, scaleMode sm, const spriteparam& parFree, const spriteparam& parPressed, const std::function<void()>& action);
+};
+
+class uiSelectable;
+class selector {
+	int selected;
+	std::vector<uiSelectable*> variants;
+public:
+	explicit selector(uint count);
+	void edit(uint id);
+	void setVariant(uiSelectable& el, uint id);
+	int getSelected() const;
+};
+class uiSelectable : public uiButton {
+	sprite* selSprite;
+	bool isSelected;
+	void draw(window* w) override;
+public:
+	uiSelectable(box2 zone, scaleMode sm, sprite* selSprite, selector& sel, uint id, const spriteparam& srcFree, const spriteparam& srcPressed);
+	void setSelection(bool mode);
 };
 
 class uiScene : public uiGroup {
@@ -96,10 +150,15 @@ public:
 	explicit uiScene(bool isActive, box2 zone = box2::unit());
 	void changeToNewScene(uiScene* other);
 };
-
 class uiSideCut : public uiGroup {
 	box2 getSubBox(uint i) final;
 	sf::Vector2f subSize;
 public:
 	explicit uiSideCut(sf::Vector2f subSize, box2 zone = box2::unit(), scaleMode sm = scaleMode::fullZone);
+};
+class uiGrid : public uiGroup {
+	box2 getSubBox(uint i) final;
+	sf::Vector2u metrics;
+public:
+	explicit uiGrid(sf::Vector2u metrics, box2 zone = box2::unit(), scaleMode sm = scaleMode::fullZone);
 };

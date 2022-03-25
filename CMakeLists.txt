@@ -15,7 +15,7 @@ set(CMAKE_CXX_STANDARD 14)
 #set(CMAKE_MODULE_PATH "/home/cyanmargh/SFML-compiled" ${CMAKE_MODULE_PATH})
 #set(SFML_STATIC_LIBRARIES TRUE)
 
-find_package(SFML 2.5 COMPONENTS graphics audio REQUIRED)
+find_package(SFML 2.5.1 COMPONENTS graphics audio REQUIRED)
 add_executable(${PROJECT_NAME} ${SOURCE})
 
 target_link_libraries(${PROJECT_NAME} sfml-graphics)

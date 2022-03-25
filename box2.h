@@ -9,6 +9,7 @@ struct box2 {
 	sf::Vector2f topRight, bottomLeft;
 
 	box2() = default;
+	box2(sf::FloatRect rect);
 	box2(sf::Vector2f bottomLeft, sf::Vector2f topRight);
 	box2(float l, float b, float r, float t);
 

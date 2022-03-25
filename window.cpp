@@ -1,13 +1,6 @@
 #include "window.h"
 
 sf::Vector2f window::getActualSize(sf::Vector2f s) const {
-	//if (hv) {
-	//s.x = std::max(s.x, minSize);
-	//s.y = std::min(s.y, s.x * minQ);
-	//} else {
-	//s.y = std::max(s.y, minSize);
-	//s.x = std::min(s.x, s.y * minQ);
-	//}
 	return s;
 }
 void window::drawAll() {

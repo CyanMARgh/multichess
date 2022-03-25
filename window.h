@@ -23,4 +23,5 @@ public:
 	void startRenderCycle();
 
 	friend class sprite;
+	friend class textSprite;
 };

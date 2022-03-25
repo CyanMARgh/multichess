@@ -9,7 +9,10 @@ sf::Vector2f operator/(const sf::Vector2f& lhs, const sf::Vector2f& rhs) {
 
 box2::box2(sf::Vector2f bottomLeft, sf::Vector2f topRight) :bottomLeft(bottomLeft), topRight(topRight) { }
 box2::box2(float l, float b, float r, float t) :bottomLeft(sf::Vector2f(l, b)), topRight(sf::Vector2f(r, t)) { }
-
+box2::box2(sf::FloatRect rect) {
+	bottomLeft = {rect.left, rect.top - rect.height};
+	topRight = {rect.left + rect.width, rect.top};
+}
 box2 box2::unit() {
 	return {0, 0, 1, 1};
 }
