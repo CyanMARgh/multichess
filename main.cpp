@@ -32,7 +32,6 @@ int main() {
 		int s = sel.getSelected();
 		if (s != -1)t0.setByIndex(i, s);
 	});
-
 	g0.setUIPart(0, b0);
 	g0.setUIPart(1, t0);
 	g0.setUIPart(2, selGrid);

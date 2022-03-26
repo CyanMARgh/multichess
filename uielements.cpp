@@ -1,14 +1,14 @@
 #include "uielements.h"
 #include <utility>
 
-std::unordered_set<std::unique_ptr<sprite::base>> sprite::loadedSprites = {};
-sprite::base::base(const sf::Image& img, const std::string& name, sf::IntRect rect) {
+std::unordered_set<std::unique_ptr<sprbase>> sprbase::loadedSprites = {};
+sprbase::sprbase(const sf::Image& img, const std::string& name, sf::IntRect rect) {
 	tex.loadFromImage(img, rect);
 	spr.setTexture(tex);
 	this->name = name;
 	s0 = sf::Vector2u(rect.width, rect.height);
 }
-void sprite::base::draw(window* w, box2 zone) {
+void sprbase::draw(window* w, box2 zone) {
 	auto sizeScaled = w->sizeScaled;
 	zone = {zone.bottomLeft.x, sizeScaled.y - zone.topRight.y, zone.topRight.x, sizeScaled.y - zone.bottomLeft.y};
 	spr.setPosition(zone.bottomLeft);
@@ -17,12 +17,14 @@ void sprite::base::draw(window* w, box2 zone) {
 	w->rw.draw(spr);
 }
 void sprite::loadSpriteSheet(const std::string& src, sf::Vector2u gridMetrics) {
-	//check if loaded
+	std::string prefix = src + "(" + std::to_string(gridMetrics.x) + ";" + std::to_string(gridMetrics.y) + ")";
+	auto _s = std::find_if(sprbase::loadedSprites.begin(), sprbase::loadedSprites.end(), [&src](const auto& item) {
+		return item->name == src + "0";
+	});
+	if (_s != sprbase::loadedSprites.end()) return;
 
 	sf::Image img;
 	img.loadFromFile(src);
-
-	std::string prefix = src + "(" + std::to_string(gridMetrics.x) + ";" + std::to_string(gridMetrics.y) + ")";
 
 	sf::Vector2u s = img.getSize();
 	sf::Vector2u s0 = {s.x / gridMetrics.x, s.y / gridMetrics.y};
@@ -30,29 +32,22 @@ void sprite::loadSpriteSheet(const std::string& src, sf::Vector2u gridMetrics) {
 	for (int y = 0, i = 0; y < gridMetrics.y; y++) {
 		for (int x = 0; x < gridMetrics.x; x++, i++) {
 			sf::IntRect rect((int)(s0.x * x), (int)(s0.y * y), (int)s0.x, (int)s0.y);
-			std::unique_ptr<sprite::base> sb(new base(img, prefix + std::to_string(i), rect));
-			loadedSprites.insert(std::move(sb));
+			std::unique_ptr<sprbase> sb(new sprbase(img, prefix + std::to_string(i), rect));
+			sprbase::loadedSprites.insert(std::move(sb));
 		}
 	}
 }
 sprite::sprite() {
 	sbptr = nullptr;
 }
-sprite::sprite(const std::string& src, sf::Vector2u gridSize, uint32_t id) {
-	std::string srcf = src + "(" + std::to_string(gridSize.x) + ";" + std::to_string(gridSize.y) + ")" + std::to_string(id);
-	auto _s = std::find_if(loadedSprites.begin(), loadedSprites.end(), [&](const auto& item) {
+sprite::sprite(const std::string& src, sf::Vector2u gridMetrics, uint32_t id) {
+	std::string srcf = src + "(" + std::to_string(gridMetrics.x) + ";" + std::to_string(gridMetrics.y) + ")" + std::to_string(id);
+	loadSpriteSheet(src, gridMetrics);
+	sbptr = &**std::find_if(sprbase::loadedSprites.begin(), sprbase::loadedSprites.end(), [&srcf](const auto& item) {
 		return item->name == srcf;
 	});
-	if (_s == loadedSprites.end()) {
-		loadSpriteSheet(src, gridSize);
-		sbptr = &**std::find_if(loadedSprites.begin(), loadedSprites.end(), [&](const auto& item) {
-			return item->name == srcf;
-		});
-	} else {
-		sbptr = &**_s;
-	}
 }
-sprite::sprite(const spriteparam& par) : sprite(par.s, par.gm, par.i) { }
+sprite::sprite(const spriteparam& par) :sprite(par.s, par.gm, par.i) { }
 void sprite::draw(window* w, box2 zone) {
 	if (sbptr)sbptr->draw(w, zone);
 }

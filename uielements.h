@@ -12,25 +12,29 @@ struct spriteparam {
 	sf::Vector2u gm = {1, 1};
 	int i = 0;
 };
+struct sprbase {
+	std::string name;
+	sf::Texture tex;
+	sf::Sprite spr;
+	sf::Vector2u s0;
+	sprbase(const sf::Image& img, const std::string& name, sf::IntRect rect);
+	sprbase& operator=(const sprbase&) = delete;
+	void draw(window* w, box2 zone);
+	static std::unordered_set<std::unique_ptr<sprbase>> loadedSprites;
+};
 class sprite {
-	struct base {
-		std::string name;
-		sf::Texture tex;
-		sf::Sprite spr;
-		sf::Vector2u s0;
-		base(const sf::Image& img, const std::string& name, sf::IntRect rect);
-		base& operator=(const base&) = delete;
-		void draw(window* w, box2 zone);
-	};
-	base* sbptr;
+	sprbase* sbptr;
 public:
-	static std::unordered_set<std::unique_ptr<base>> loadedSprites;
 	static void loadSpriteSheet(const std::string& src, sf::Vector2u gridMetrics);
 	sprite();
-	explicit sprite(const std::string& src, sf::Vector2u srcGrifSize, uint32_t id);
-	sprite(const spriteparam& par);
+	explicit sprite(const std::string& src, sf::Vector2u gridMetrics, uint32_t id);
+	explicit sprite(const spriteparam& par);
 	void draw(window* w, box2 zone);
 };
+class spriteStr {
+	//
+};
+
 class textSprite {
 	sf::Font font;
 	sf::Text text;

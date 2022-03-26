@@ -22,6 +22,6 @@ public:
 	void setUIScene(uiElement& uiel);
 	void startRenderCycle();
 
-	friend class sprite;
+	friend class sprbase;
 	friend class textSprite;
 };
