@@ -5,6 +5,7 @@
 #include <functional>
 #include <cstdint>
 #include <unordered_set>
+#include <memory>
 
 class window;
 struct spriteparam {
@@ -20,10 +21,10 @@ struct sprbase {
 	sprbase(const sf::Image& img, const std::string& name, sf::IntRect rect);
 	sprbase& operator=(const sprbase&) = delete;
 	void draw(window* w, box2 zone);
-	static std::unordered_set<std::unique_ptr<sprbase>> loadedSprites;
+	static std::unordered_set<std::shared_ptr<sprbase>> loadedSprites;
 };
 class sprite {
-	sprbase* sbptr;
+	std::shared_ptr<sprbase> sbptr;
 public:
 	static void loadSpriteSheet(const std::string& src, sf::Vector2u gridMetrics);
 	sprite();
@@ -105,6 +106,7 @@ protected:
 	void draw(window* w) final;
 public:
 	uiText(box2 zone, scaleMode sm, const std::string& textSrc, const std::string& fontSrc);
+	void setString(const std::string& s);
 };
 class uiTilemap : public uiElement {
 	std::vector<uint32_t> map;
@@ -150,9 +152,11 @@ public:
 };
 
 class uiScene : public uiGroup {
+	std::function<void()> onOpen;
 public:
-	explicit uiScene(bool isActive, box2 zone = box2::unit());
-	void changeToNewScene(uiScene* other);
+	explicit uiScene(bool isActive, box2 zone, std::function<void()> onOpen = [](){});
+	void changeToNewScene(uiScene& other);
+	static std::function<void()> switchScene(uiScene& from, uiScene& to);
 };
 class uiSideCut : public uiGroup {
 	box2 getSubBox(uint i) final;

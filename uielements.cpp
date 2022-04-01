@@ -1,7 +1,7 @@
 #include "uielements.h"
 #include <utility>
 
-std::unordered_set<std::unique_ptr<sprbase>> sprbase::loadedSprites = {};
+std::unordered_set<std::shared_ptr<sprbase>> sprbase::loadedSprites = {};
 sprbase::sprbase(const sf::Image& img, const std::string& name, sf::IntRect rect) {
 	tex.loadFromImage(img, rect);
 	spr.setTexture(tex);
@@ -32,7 +32,7 @@ void sprite::loadSpriteSheet(const std::string& src, sf::Vector2u gridMetrics) {
 	for (int y = 0, i = 0; y < gridMetrics.y; y++) {
 		for (int x = 0; x < gridMetrics.x; x++, i++) {
 			sf::IntRect rect((int)(s0.x * x), (int)(s0.y * y), (int)s0.x, (int)s0.y);
-			std::unique_ptr<sprbase> sb(new sprbase(img, prefix + std::to_string(i), rect));
+			std::shared_ptr<sprbase> sb(new sprbase(img, prefix + std::to_string(i), rect));
 			sprbase::loadedSprites.insert(std::move(sb));
 		}
 	}
@@ -43,7 +43,7 @@ sprite::sprite() {
 sprite::sprite(const std::string& src, sf::Vector2u gridMetrics, uint32_t id) {
 	std::string srcf = src + "(" + std::to_string(gridMetrics.x) + ";" + std::to_string(gridMetrics.y) + ")" + std::to_string(id);
 	loadSpriteSheet(src, gridMetrics);
-	sbptr = &**std::find_if(sprbase::loadedSprites.begin(), sprbase::loadedSprites.end(), [&srcf](const auto& item) {
+	sbptr = *std::find_if(sprbase::loadedSprites.begin(), sprbase::loadedSprites.end(), [&srcf](const auto& item) {
 		return item->name == srcf;
 	});
 }
@@ -53,7 +53,9 @@ void sprite::draw(window* w, box2 zone) {
 }
 
 textSprite::textSprite(const std::string& fontSrc, const std::string& textSrc) {
-	font.loadFromFile(fontSrc);
+	if(!font.loadFromFile(fontSrc)) {
+		throw std::runtime_error("can't load font");
+	}
 	text.setFont(font);
 	stext = textSrc;
 }
@@ -67,9 +69,10 @@ void textSprite::draw(window* w, box2 zone) {
 	text.setString(stext);
 	auto lb = text.getLocalBounds();
 	uint32_t ns = std::count(stext.begin(), stext.end(), '\n') + 1;
-	text.setCharacterSize((uint)std::min(.8f * zone.height() * zone.width() / lb.width, zone.height() * .8f / (float)ns));
-	// искуственный параметр
-	lb = text.getLocalBounds();
+	//printf(">%f\n", lb.width / (stext.size() - 1));
+	text.setScale(sf::Vector2f(1, 1) * std::min((float)(.9 * zone.width() / lb.width), .9f / (float)ns));
+
+	lb = text.getGlobalBounds();
 	sf::Vector2f c = ((box2)lb).rad();
 	text.setPosition(zone.center() - c);
 	w->rw.draw(text);
@@ -188,14 +191,17 @@ void uiText::draw(window* w) {
 	}
 }
 uiText::uiText(box2 zone, scaleMode sm, const std::string& textSrc, const std::string& fontSrc) :uiElement(zone, sm), spr(fontSrc, textSrc) { }
+void uiText::setString(const std::string& s) {
+	spr.setText(s);
+}
 
 uiTilemap::uiTilemap(box2 zone, scaleMode sm, const std::string& src, sf::Vector2u srcGridSize, uint32_t beg, uint32_t end) :uiElement(zone, sm) {
 	map = {};
 	gridSize = {};
 	if (end == -1) end = srcGridSize.x * srcGridSize.y;
-	tilemap.reserve(end - beg);
+	tilemap.assign(end - beg, {});
 	for (uint32_t i = 0, j = beg; i < srcGridSize.x * srcGridSize.y; i++, j++) {
-		tilemap[i] = sprite(src, srcGridSize, j);
+		tilemap[i] = (sprite(src, srcGridSize, j));
 	}
 }
 void uiTilemap::draw(window* w) {
@@ -257,12 +263,16 @@ uiButton::uiButton(box2 zone, scaleMode sm, const spriteparam& parFree, const sp
 	isPressed = false;
 }
 
-uiScene::uiScene(bool isActive, box2 zone) :uiGroup(zone, scaleMode::fullZone) {
+uiScene::uiScene(bool isActive, box2 zone, std::function<void()> onOpen) :uiGroup(zone, scaleMode::fullZone), onOpen(std::move(onOpen)) {
 	visible = isActive;
 }
-void uiScene::changeToNewScene(uiScene* other) {
+void uiScene::changeToNewScene(uiScene& other) {
 	visible = false;
-	other->visible = true;
+	other.visible = true;
+	other.onOpen();
+}
+std::function<void()> uiScene::switchScene(uiScene& from, uiScene& to) {
+	return [&from, &to]() { from.changeToNewScene(to); };
 }
 
 box2 uiSideCut::getSubBox(uint i) {

@@ -38,11 +38,23 @@ void window::startRenderCycle() {
 			} else if (e.type == sf::Event::MouseButtonReleased) {
 				scene->onMouseEvent(pos, mouseEvent::release);
 				pressed = false;
+			} else if (e.type == sf::Event::TextEntered) {
+				uint32_t c = e.text.unicode;
+				for(auto& event: keyEvents){
+					event(c);
+				}
 			}
 		}
-		if(pressed) {
+		if (pressed) {
 			scene->onMouseEvent(pos, mouseEvent::holding);
 		}
 		drawAll();
 	}
 }
+void window::addKeyEvent(const std::function<void(uint32_t)>& event) {
+	keyEvents.push_back(event);
+}
+/*void window::addUpdateEvent(const std::function<void()>& event) {
+	updateEvents.push_back(event);
+}*/
+

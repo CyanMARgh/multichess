@@ -4,8 +4,9 @@ set(PROJECT_NAME multichess)
 cmake_minimum_required(VERSION 3.19)
 project(${PROJECT_NAME})
 set(CMAKE_CXX_STANDARD 14)
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
 
 find_package(SFML 2.5.1 COMPONENTS graphics audio REQUIRED)
 add_executable(${PROJECT_NAME} ${SOURCE})
 
-target_link_libraries(${PROJECT_NAME} sfml-graphics)
+target_link_libraries(${PROJECT_NAME} sfml-graphics sfml-network)

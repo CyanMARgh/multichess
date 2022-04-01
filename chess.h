@@ -13,12 +13,12 @@ namespace figures {
 			MASKF = 0b000'11111,
 			NONE = 0b000'00000,
 
-			PAWN = 0b000'00000,
-			BISHOP = 0b000'00000,
-			ROCK = 0b000'00000,
-			KNIGHT = 0b000'00000,
-			QUUEN = 0b000'00000,
-			KING = 0b000'00000,
+			PAWN = 0b000'00001,
+			BISHOP = 0b000'00010,
+			ROOK = 0b000'00011,
+			KNIGHT = 0b000'00100,
+			QUEEN = 0b000'00101,
+			KING = 0b000'00110,
 
 			WHITE = 0b001'00000,
 			BLACK = 0b010'00000;
@@ -56,7 +56,8 @@ class board {
 		DRAW
 	} state; // состояние игры
 public:
-	board();
+	board() {
+	}
 
 	void playStep(step s); // применение хода
 	void undoStep(step s); // отмена хода
