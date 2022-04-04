@@ -16,6 +16,7 @@ class window {
 	sf::RenderWindow rw;
 	sf::Vector2f sizeOrigin, sizeScaled;
 	sf::Vector2f getActualSize(sf::Vector2f s) const;
+	std::string name;
 
 	std::vector<std::function<void(uint32_t)>> keyEvents;
 	//std::vector<std::function<void()>> updateEvents;

@@ -11,13 +11,14 @@ void window::drawAll() {
 window::window(const std::string& name, sf::Vector2f size, float minSize, float minQ, bool hv) {
 	this->minSize = minSize, this->minQ = minQ, this->hv = hv;
 	sizeScaled = sizeOrigin = size;
-	rw.create(sf::VideoMode((uint)size.x, (uint)size.y), name);
+	this->name = name;
 }
 void window::setUIScene(uiElement& uiel) {
 	scene = &uiel;
 	uiel.reshape(sizeOrigin, sizeScaled);
 }
 void window::startRenderCycle() {
+	rw.create(sf::VideoMode((uint)sizeScaled.x, (uint)sizeScaled.y), name);
 	if (scene == nullptr)throw std::invalid_argument("scene not set");
 	bool pressed = false;
 

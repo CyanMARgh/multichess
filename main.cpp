@@ -1,135 +1,13 @@
 #include <cstdio>
 #include "window.h"
 #include <memory>
-#include <thread>
-#include <future>
-#include <sstream>
+#include "connection.h"
 #include <SFML/Network.hpp>
-
+#include <utility>
 
 //#define DEMO0
 //#define DEMO1
 #define DEMO2
-//#define DEMO3
-
-class letterSender {
-protected:
-	std::string msgbuf;
-	std::mutex mtx;
-	sf::TcpSocket socket;
-	sf::SocketSelector selector;
-public:
-	letterSender& operator=(letterSender&) = delete;
-	void send(const std::string& msg) {
-		if (s != MAILING)return;
-		sf::Packet packet;
-		packet << msg;
-		mtx.lock();
-		socket.send(packet);
-		mtx.unlock();
-	}
-	bool tryReceive() {
-		sf::Packet packet;
-		if (selector.wait(sf::seconds(1))) {
-			if (selector.isReady(socket)) {
-				mtx.lock();
-				socket.receive(packet);
-				mtx.unlock();
-				packet >> msgbuf;
-				return true;
-			}
-		}
-		return false;
-	}
-	enum status {
-		START,
-		CONNECTING,
-		GOTIP,
-		MAILING,
-		ERROR,
-		STOP
-	} s = START;
-};
-class letterSenderServer : public letterSender {
-	std::string IPnPort;
-	std::unique_ptr<std::thread> waiter;
-
-	static void lifeCycle(letterSenderServer* ls) {
-//		printf("[0]\n");
-		sf::IpAddress address = sf::IpAddress::getLocalAddress();
-		sf::TcpListener listener;
-		listener.setBlocking(false);
-		if (listener.listen(sf::Socket::AnyPort) != sf::Socket::Done) {
-			ls->s = ERROR;
-			return;
-		}
-		ls->s = GOTIP;
-//		printf("[1]\n");
-		int port = listener.getLocalPort();
-
-		ls->IPnPort = address.toString() + "  " + std::to_string(port);
-		while (listener.accept(ls->socket) != sf::Socket::Done) {
-			if (ls->s == STOP) {
-				return;
-			}
-			std::this_thread::sleep_for(std::chrono::seconds(1));
-		}
-//		printf("[2]\n");
-		ls->selector.add(ls->socket);
-
-		ls->s = MAILING;
-		while (true) {
-			if (ls->s == MAILING) {
-				ls->tryReceive();
-//				printf("[8]\n");
-			} else if (ls->s == ERROR || ls->s == STOP) {
-				break;
-			}
-		}
-//		printf("[9]\n");
-	}
-public:
-	letterSenderServer() {
-		s = CONNECTING;
-//		printf("CONNECTING\n");
-		waiter = std::make_unique<std::thread>(lifeCycle, this);
-	}
-	~letterSenderServer() {
-		s = STOP;
-		waiter->join();
-	}
-	std::string getIPnPort() const {
-		return IPnPort;
-	}
-};
-class letterSenderClient : public letterSender {
-	std::unique_ptr<std::thread> waiter;
-	static void lifeCycle(letterSenderClient* ls, sf::IpAddress addr, int port) {
-		sf::Socket::Status status = ls->socket.connect(addr, port);
-		if (status != sf::Socket::Done) {
-			ls->s = ERROR;
-			return;
-		}
-		ls->s = MAILING;
-		while (true) {
-			if (ls->s == MAILING) {
-				std::string msg;
-				ls->tryReceive();
-			} else if (ls->s == ERROR || ls->s == STOP) {
-				break;
-			}
-		}
-	}
-public:
-	letterSenderClient(sf::IpAddress addr, int port) {
-		s = CONNECTING;
-		waiter = std::make_unique<std::thread>(lifeCycle, this, addr, port);
-	}
-	~letterSenderClient() {
-		s = STOP;
-		waiter->join();
-	}
-};
 
 class asyncPrinter {
 	static void liveCycle(asyncPrinter* p) {
@@ -220,78 +98,201 @@ int main() {
 	mainWindow.startRenderCycle();
 #endif
 #ifdef DEMO2
+	struct dataG_t {
+		enum ctype_t {
+			SERVER,
+			CLIENT
+		} ctype;
+	} dataG{};
 	struct data1_t {
-		letterSenderServer ls;
+		std::shared_ptr<letterSenderServer> ls;
 		std::thread th;
 
-		static void lifeCycle(data1_t* data_1, uiText* display) {
+		enum state {
+			PREPARE,
+			OK,
+			ERROR
+		} s = PREPARE;
+		static void lifeCycle(data1_t* data, uiText* display, uiScene* s1, uiScene* s2) {
 			bool w = true;
 			while (w) {
-//				printf("[3]\n");
-				switch (data_1->ls.s) {
+				switch (data->ls->s) {
 					case letterSender::GOTIP: {
-//						printf("[4]\n");
-						display->setString(data_1->ls.getIPnPort());
-						w = false;
+						display->setString(data->ls->getIPnPort());
 					}
 					case letterSender::START:
 					case letterSender::CONNECTING:break;
-					case letterSender::MAILING:
+					case letterSender::MAILING: {
+						printf("connected ^_^\n");
+						s1->changeToNewScene(*s2);
+						data->s = OK;
+						return;
+					}
 					case letterSender::ERROR:
-					case letterSender::STOP: w = false;
+					case letterSender::STOP: {
+						w = false;
+					}
 				}
+				if (data->s == ERROR) break;
 				std::this_thread::sleep_for(std::chrono::seconds(1));
 			}
-//			printf("[5]\n");
+			printf("error ._.\n");
 		}
-		explicit data1_t(uiText& ipText) :ls() {
-			th = std::thread(lifeCycle, this, &ipText);
+		explicit data1_t(uiText& ipText, uiScene& s1, uiScene& s2) :ls(std::make_shared<letterSenderServer>()) {
+			th = std::thread(lifeCycle, this, &ipText, &s1, &s2);
 		}
 		~data1_t() {
-//			printf("[6]\n");
-			ls.s = letterSender::STOP;
+			ls->s = letterSender::STOP;
 			th.join();
-//			printf("[7]\n");
 		}
 	};
-	std::unique_ptr<data1_t> data1;
+	struct data2_t {
+		std::shared_ptr<letterSenderClient> ls;
+		std::string ipbuf;
+		std::thread th;
+		enum state {
+			PREPARE,
+			OK,
+			ERROR
+		} s = PREPARE;
+		static void lifeCycle(data2_t* data, uiScene* s1, uiScene* s2) {
+			bool w = true;
+			while (w) {
+				switch (data->ls->s) {
+					case letterSender::GOTIP:
+					case letterSender::START:
+					case letterSender::CONNECTING:break;
+					case letterSender::MAILING: {
+						printf("connected ^_^\n");
+						s1->changeToNewScene(*s2);
+						data->s = OK;
+						return;
+					}
+					case letterSender::ERROR:
+					case letterSender::STOP: {
+						w = false;
+					}
+				}
+				if (data->s == ERROR) break;
+				std::this_thread::sleep_for(std::chrono::seconds(1));
+			}
+			printf("error ._.\n");
+		}
+		void start(uiScene& s1, uiScene& s2) {
+			ls = std::make_shared<letterSenderClient>(ipbuf);
+			th = std::thread(lifeCycle, this, &s1, &s2);
+		}
+		~data2_t() {
+			if (ls) {
+				ls->s = letterSender::STOP;
+				s = ERROR;
+				th.join();
+			}
+		}
+	};
+	struct data3_t {
+		std::string msgbuf;
+		std::shared_ptr<letterSender> ls;
+		std::thread th;
 
-	uiScene welcomeScene(true, {0, 0, 1000, 1000});
+		enum state {
+			MAILING,
+			STOP
+		} s = MAILING;
 
-	uiText t_ip({50, 850, 950, 950}, scaleMode::scaleXY, "...", "Ninja Naruto.ttf");
+		static void lifeCycle(data3_t* data, uiText* display) {
+			while (data->s==MAILING) {
+				display->setString(data->ls->getmsg());
+				std::this_thread::sleep_for(std::chrono::seconds(1));
+			}
+		}
+		explicit data3_t(std::shared_ptr<letterSender> ls, uiText& display) :ls(std::move(ls)) {
+			th = std::thread(lifeCycle, this, &display);
+		}
+		~data3_t() {
+			s = STOP;
+			th.join();
+		}
+	};
+	std::unique_ptr<data1_t> data1 = nullptr;
+	std::unique_ptr<data2_t> data2 = nullptr;
+	std::unique_ptr<data3_t> data3 = nullptr;
 
-	uiScene serverConnectScene(false, {0, 0, 1000, 1000}, [&data1, &t_ip]() {
-		data1 = std::make_unique<data1_t>(t_ip);
-	});
-	uiScene clientConnectScene(false, {0, 0, 1000, 1000});
-	uiScene mailingScene(false, {0, 0, 1000, 1000});
-
-	uiText t_info({50, 850, 950, 950}, scaleMode::scaleXY, "select mode:", "Ninja Naruto.ttf");
-	uiButton b_serv({50, 400, 450, 800}, scaleMode::scaleXY, {"src0.png"}, {"src1.png"}, uiScene::switchScene(welcomeScene, serverConnectScene));
-	uiButton b_client({550, 400, 950, 800}, scaleMode::scaleXY, {"src0.png"}, {"src1.png"}, uiScene::switchScene(welcomeScene, clientConnectScene));
-	uiText t_serv({50, 400, 450, 800}, scaleMode::scaleXY, "server", "Ninja Naruto.ttf");
-	uiText t_client({550, 400, 950, 800}, scaleMode::scaleXY, "client", "Ninja Naruto.ttf");
-
-	welcomeScene.addUIPart(t_info);
-	welcomeScene.addUIPart(b_serv);
-	welcomeScene.addUIPart(b_client);
-	welcomeScene.addUIPart(t_serv);
-	welcomeScene.addUIPart(t_client);
-
-	serverConnectScene.addUIPart(t_ip);
-
-	uiGroup mainGroup(box2::unit(), scaleMode::fullZone, 4);
-	mainGroup.setUIPart(0, welcomeScene);
-	mainGroup.setUIPart(1, serverConnectScene);
-	mainGroup.setUIPart(2, clientConnectScene);
-	mainGroup.setUIPart(3, mailingScene);
-
+	uiGroup mainGroup(box2::unit(), scaleMode::fullZone);
 	window mainWindow("@_@", {1000, 1000});
+	//"WELCOME" SCENE
+	uiButton b_serv({50, 400, 450, 800}, scaleMode::scaleXY, {"src0.png"}, {"src1.png"});
+	uiButton b_client({550, 400, 950, 800}, scaleMode::scaleXY, {"src0.png"}, {"src1.png"});
+	//
+	uiScene welcomeScene(true, {0, 0, 1000, 1000});
+	mainGroup.addUIPart(welcomeScene);
+	welcomeScene.addUIPart(b_client);
+	welcomeScene.addUIPart(b_serv);
+	welcomeScene.addUIPart2(new uiText({50, 850, 950, 950}, scaleMode::scaleXY, "select mode:", "Ninja Naruto.ttf"));
+	welcomeScene.addUIPart2(new uiText({50, 400, 450, 800}, scaleMode::scaleXY, "server", "Ninja Naruto.ttf"));
+	welcomeScene.addUIPart2(new uiText({550, 400, 950, 800}, scaleMode::scaleXY, "client", "Ninja Naruto.ttf"));
+	//"SERVER CONNECTION" SCENE
+	uiText t_ip({50, 850, 950, 950}, scaleMode::scaleXY, "...", "Ninja Naruto.ttf");
+	//
+	uiScene serverConnectScene(false, {0, 0, 1000, 1000});
+	mainGroup.addUIPart(serverConnectScene);
+	serverConnectScene.addUIPart(t_ip);
+	b_serv.setAction(uiScene::switchScene(welcomeScene, serverConnectScene));
+	//"CLIENT CONNECTION" SCENE
+	uiText t_ipInput({50, 850, 950, 950}, scaleMode::scaleXY, "", "Ninja Naruto.ttf");
+	//
+	uiScene clientConnectScene(false, {0, 0, 1000, 1000});
+	clientConnectScene.addUIPart(t_ipInput);
+	mainGroup.addUIPart(clientConnectScene);
+	b_client.setAction(uiScene::switchScene(welcomeScene, clientConnectScene));
+	clientConnectScene.setOnOpenAction([&data2, &dataG]() {
+		dataG.ctype = dataG_t::CLIENT;
+		data2 = std::make_unique<data2_t>();
+	});
+	//MAILING SCENE
+	uiText t_msgin({50, 850, 950, 950}, scaleMode::scaleXY, "[.....]", "Ninja Naruto.ttf");
+	uiText t_msgout({50, 600, 950, 700}, scaleMode::scaleXY, ">", "Ninja Naruto.ttf");
+	//
+	uiScene mailingScene(false, {0, 0, 1000, 1000});
+	mailingScene.addUIPart(t_msgin);
+	mailingScene.addUIPart(t_msgout);
+	mainGroup.addUIPart(mailingScene);
+	serverConnectScene.setOnOpenAction([&data1, &t_ip, &dataG, &serverConnectScene, &mailingScene]() {
+		dataG.ctype = dataG_t::SERVER;
+		data1 = std::make_unique<data1_t>(t_ip, serverConnectScene, mailingScene);
+	});
+	mainWindow.addKeyEvent([&clientConnectScene, &t_ipInput, &data2, &mailingScene](uint32_t i) {
+		if (clientConnectScene.isActive()) {
+			if (i == 13) {
+				printf("[%s]\n", data2->ipbuf.c_str());
+				data2->start(clientConnectScene, mailingScene);
+			} else if ((i >= '0' && i <= '9') || i == '.' || i == ' ') {
+				data2->ipbuf += (char)i;
+				t_ipInput.setString(data2->ipbuf);
+			}
+		}
+	});
+	mailingScene.setOnOpenAction([&dataG, &data1, &data2, &data3, &t_msgin]() {
+		if (dataG.ctype == dataG_t::SERVER) {
+			data3 = std::make_unique<data3_t>(data1->ls, t_msgin);
+		} else {
+			data3 = std::make_unique<data3_t>(data2->ls, t_msgin);
+		}
+	});
+	mainWindow.addKeyEvent([&mailingScene, &data3, &t_msgout](uint32_t i) {
+		if (mailingScene.isActive()) {
+			if (i == 13) {
+				data3->ls->send(data3->msgbuf);
+				data3->msgbuf = "";
+			} else if (i >= ' ' && i <= 'Z') {
+				data3->msgbuf += (char)i;
+			}
+			t_msgout.setString(data3->msgbuf);
+		}
+	});
+	//FINAL
 	mainWindow.setUIScene(mainGroup);
 	mainWindow.startRenderCycle();
-#endif
-#ifdef DEMO3
-
 #endif
 	return 0;
 }

@@ -64,22 +64,29 @@ enum class mouseEvent {
 class uiElement {
 protected:
 	bool visible = true;
+	bool active = false;
+	bool pressed = false;
 	scaleMode sm;
 	box2 boxOrigin, boxScaled;
 
 	uiElement(box2 zone, scaleMode sm);
 public:
-	uiElement& operator=(const uiElement&) = delete;
-	uiElement(const uiElement&) = delete;
+	bool isActive() const;
+	//uiElement& operator=(const uiElement&) = delete;
+	//uiElement(uiElement&&) = default;
+
+	//uiElement(const uiElement&) = delete;
 
 	bool isInside(sf::Vector2f pos) const;
 	virtual void reshape(box2 parentBoxOrigin, box2 parentBoxScaled);
 	void reshape(sf::Vector2f parentSizeOrigin, sf::Vector2f parentBoxScaled);
 	virtual void draw(window* w) = 0;
 	virtual bool onMouseEvent(sf::Vector2f pos, mouseEvent event);
+
+	virtual void onClick(sf::Vector2f pos);
 };
 class uiGroup : public uiElement {
-	std::vector<uiElement*> parts;
+	std::vector<std::pair<uiElement*, bool>> parts;
 	int pressedPart = -1;
 
 	void reshape(box2 parentBoxOrigin, box2 parentBoxScaled) final;
@@ -89,8 +96,9 @@ protected:
 	virtual box2 getSubBox(uint i);
 public:
 	explicit uiGroup(box2 zone = box2::unit(), scaleMode sm = scaleMode::fullZone, uint count = 0);
+	void addUIPart2(uiElement* uiel);
 	void addUIPart(uiElement& uiel);
-	void setUIPart(uint i, uiElement& uiel);
+	~uiGroup();
 };
 
 class uiImage : public uiElement {
@@ -121,15 +129,17 @@ public:
 	void setByIndex(uint32_t cellId, uint32_t texId);
 };
 class uiButton : public uiElement {
-	bool isPressed;
 	sprite sprf, sprp;
 	std::function<void(sf::Vector2f)> action;
-	bool onMouseEvent(sf::Vector2f pos, mouseEvent event) final;
+	void onClick(sf::Vector2f pos) override;
 protected:
 	void draw(window* w) override;
 public:
-	uiButton(box2 zone, scaleMode sm, const spriteparam& parFree, const spriteparam& parPressed, std::function<void(sf::Vector2f)> action);
+	uiButton(box2 zone, scaleMode sm, const spriteparam& parFree, const spriteparam& parPressed, std::function<void(sf::Vector2f)> action = nullptr);
 	uiButton(box2 zone, scaleMode sm, const spriteparam& parFree, const spriteparam& parPressed, const std::function<void()>& action);
+
+	void setAction(const std::function<void(sf::Vector2f)>& action);
+	void setAction(const std::function<void()>& action);
 };
 
 class uiSelectable;
@@ -154,9 +164,11 @@ public:
 class uiScene : public uiGroup {
 	std::function<void()> onOpen;
 public:
-	explicit uiScene(bool isActive, box2 zone, std::function<void()> onOpen = [](){});
+	explicit uiScene(bool isActive, box2 zone, std::function<void()> onOpen = nullptr);
 	void changeToNewScene(uiScene& other);
 	static std::function<void()> switchScene(uiScene& from, uiScene& to);
+
+	void setOnOpenAction(const std::function<void()>& onOpen);
 };
 class uiSideCut : public uiGroup {
 	box2 getSubBox(uint i) final;
