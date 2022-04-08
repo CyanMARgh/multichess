@@ -1,3 +1,4 @@
+#pragma once
 #include <sstream>
 #include <thread>
 #include <SFML/Network.hpp>
