@@ -18,8 +18,8 @@ void sprbase::draw(window* w, box2 zone) {
 }
 void sprite::loadSpriteSheet(const std::string& src, sf::Vector2u gridMetrics) {
 	std::string prefix = src + "(" + std::to_string(gridMetrics.x) + ";" + std::to_string(gridMetrics.y) + ")";
-	auto _s = std::find_if(sprbase::loadedSprites.begin(), sprbase::loadedSprites.end(), [&src](const auto& item) {
-		return item->name == src + "0";
+	auto _s = std::find_if(sprbase::loadedSprites.begin(), sprbase::loadedSprites.end(), [&prefix](const auto& item) {
+		return item->name == prefix + "0";
 	});
 	if (_s != sprbase::loadedSprites.end()) return;
 
@@ -129,22 +129,30 @@ int uiElement::onMouseEvent(mouseEvent event, sf::Vector2f pos) {
 bool uiElement::isInside(sf::Vector2f pos) const {
 	return boxScaled.isInside(pos);
 }
-bool uiElement::isClickable() const {
-	return clickable;
-}
-bool uiElement::isVisible() const {
-	return visible;
-}
+
+bool uiElement::isVisible() const { return (flags >> 0) & 1; }
+bool uiElement::isClickable() const { return (flags >> 1) & 1; }
+bool uiElement::isPressed() const { return (flags >> 2) & 1; }
+bool uiElement::isFresh() const { return (flags >> 3) & 1; }
+
+void uiElement::setVisible(bool visible) { flags = (flags & ~(1 << 0)) | (visible << 0); }
+void uiElement::setClickable(bool clickable) { flags = (flags & ~(1 << 1)) | (clickable << 1); }
+void uiElement::setPressed(bool pressed) { flags = (flags & ~(1 << 2)) | (pressed << 2); }
+void uiElement::setFresh(bool fresh) { flags = (flags & ~(1 << 3)) | (fresh << 3); }
+
 void uiElement::draw(window* w) { }
 sf::Vector2f uiElement::toUnit(sf::Vector2f pos) const {
 	return boxScaled.inv() * pos;
+}
+void uiElement::addPartsOrdered(std::vector<uiElement*>& ordered) {
+	ordered.push_back(this);
 }
 
 box2 uiGroup::getSubBox(uint i) {
 	return boxScaled;
 }
 void uiGroup::draw(window* w) {
-	if (visible) {
+	if (isVisible()) {
 		for (auto& e : parts) {
 			if (e) e->draw(w);
 		}
@@ -152,7 +160,7 @@ void uiGroup::draw(window* w) {
 }
 int uiGroup::onMouseEvent(mouseEvent event, sf::Vector2f pos) {
 	int res = NO_HIT;
-	if (clickable) {
+	if (isClickable()) {
 		switch (event) {
 			case mouseEvent::pressing: {
 				if (!isInside(pos))break;
@@ -162,12 +170,11 @@ int uiGroup::onMouseEvent(mouseEvent event, sf::Vector2f pos) {
 					int sres = parts[i]->onMouseEvent(event, pos);
 					if (sres != NO_HIT) {
 						pressedPart = (int)i;
-						pressed = true;
 						res = sres;
 						break;
 					}
 				}
-				pressed = true;
+				setPressed(true);
 				break;
 			}
 			case mouseEvent::holding: {
@@ -177,10 +184,10 @@ int uiGroup::onMouseEvent(mouseEvent event, sf::Vector2f pos) {
 				break;
 			}
 			case mouseEvent::release: {
-				if (pressedPart >=0 && parts[pressedPart]) {
+				if (pressedPart >= 0 && parts[pressedPart]) {
 					res = parts[pressedPart]->onMouseEvent(event, pos);
 				}
-				pressed = false;
+				setPressed(false);
 				break;
 			}
 		}
@@ -197,7 +204,7 @@ void uiGroup::reshape(box2 parentBoxOrigin, box2 parentBoxScaled) {
 }
 uiGroup::uiGroup(box2 zone, scaleMode sm, uint count) :uiElement(zone, sm) {
 	parts = std::vector<std::unique_ptr<uiElement>>(count);
-	clickable = true;
+	setClickable(true);
 }
 void uiGroup::addUIPart(uiElement* uiel) {
 	parts.push_back(std::unique_ptr<uiElement>(uiel));
@@ -205,16 +212,21 @@ void uiGroup::addUIPart(uiElement* uiel) {
 void uiGroup::setPart(uiElement* uiel, uint32_t id) {
 	parts[id] = std::unique_ptr<uiElement>(uiel);
 }
+void uiGroup::addPartsOrdered(std::vector<uiElement*>& ordered) {
+	for (const auto& p : parts) {
+		p->addPartsOrdered(ordered);
+	}
+}
 
 uiImage::uiImage(box2 zone, scaleMode sm, const spriteparam& src) :uiElement(zone, sm), spr(src) { }
 void uiImage::draw(window* w) {
-	if (visible) {
+	if (isVisible()) {
 		spr.draw(w, boxScaled);
 	}
 }
 
 void uiText::draw(window* w) {
-	if (visible) {
+	if (isVisible()) {
 		spr.draw(w, boxScaled);
 	}
 }
@@ -229,17 +241,19 @@ uiTilemap::uiTilemap(box2 zone, scaleMode sm, const std::string& src, sf::Vector
 	if (end == -1) end = srcGridSize.x * srcGridSize.y;
 	tilemap.assign(end - beg, {});
 	for (uint32_t i = 0, j = beg; j < end; i++, j++) {
-		tilemap[i] = (sprite(src, srcGridSize, j));
+		tilemap[i] = sprite(src, srcGridSize, j);
 	}
 }
+box2 uiTilemap::subBox(sf::Vector2i i) {
+	return boxScaled * box2(sf::Vector2f(i) / sf::Vector2f(gridSize), (sf::Vector2f(i) + sf::Vector2f(1, 1)) / sf::Vector2f(gridSize));
+}
 void uiTilemap::draw(window* w) {
-	if (visible) {
-		sf::Vector2u i;
+	if (isVisible()) {
+		sf::Vector2i i;
 		int j = 0;
 		for (i.y = 0; i.y < gridSize.y; i.y++) {
 			for (i.x = 0; i.x < gridSize.x; i.x++, j++) {
-				auto box = boxScaled * box2(sf::Vector2f(i) / sf::Vector2f(gridSize), (sf::Vector2f(i) + sf::Vector2f(1, 1)) / sf::Vector2f(gridSize));
-				tilemap[map[j]].draw(w, box);
+				tilemap[map[j]].draw(w, subBox(i));
 			}
 		}
 	}
@@ -248,9 +262,15 @@ void uiTilemap::setIndexes(std::vector<uint32_t> map_, sf::Vector2u gridSize_) {
 	gridSize = gridSize_;
 	if (gridSize.x * gridSize.y != map_.size())exit(-1);
 	map = std::move(map_);
+	setFresh(false);
 }
 void uiTilemap::setByIndex(uint32_t cellId, uint32_t texId) {
 	map[cellId] = texId;
+	setFresh(false);
+}
+sf::Vector2i uiTilemap::proj(sf::Vector2f pos) {
+	pos = toUnit(pos);
+	return {(int)(pos.x * (float)gridSize.x), (int)(pos.y * (float)gridSize.y)};
 }
 
 size_t uiTilemap::size() const {
@@ -259,18 +279,20 @@ size_t uiTilemap::size() const {
 
 int uiInvisibleButton::onMouseEvent(mouseEvent event, sf::Vector2f pos) {
 	int res = NO_HIT;
-	if (clickable) {
+	if (isClickable()) {
 		switch (event) {
 			case mouseEvent::pressing: {
 				if (!isInside(pos))break;
-				pressed = true;
+				setPressed(true);
+				setFresh(false);
 				res = HIT_NO_ACTION;
 				break;
 			}
 			case mouseEvent::holding: break;
 			case mouseEvent::release: {
 				if (isInside(pos)) res = (int)id;
-				pressed = false;
+				setPressed(false);
+				setFresh(false);
 				break;
 			}
 		}
@@ -278,11 +300,11 @@ int uiInvisibleButton::onMouseEvent(mouseEvent event, sf::Vector2f pos) {
 	return res;
 }
 uiInvisibleButton::uiInvisibleButton(box2 zone, scaleMode sm, uint32_t id) :uiElement(zone, sm), id(id) {
-	clickable = true;
+	setClickable(true);
 }
 void uiButton::draw(window* w) {
-	if (visible) {
-		(pressed ? sprp : sprf).draw(w, boxScaled);
+	if (isVisible()) {
+		(isPressed() ? sprp : sprf).draw(w, boxScaled);
 	}
 }
 uiButton::uiButton(box2 zone, scaleMode sm, const spriteparam& parFree, const spriteparam& parPressed, uint32_t id) :
@@ -327,6 +349,28 @@ box2 uiGrid::getSubBox(uint i) {
 }
 uiGrid::uiGrid(sf::Vector2u metrics, box2 zone, scaleMode sm) :uiGroup(zone, sm, metrics.x * metrics.y) {
 	this->metrics = metrics;
+}
+
+void uiSelectionTM::draw(window* w) {
+	if (selPos != sf::Vector2i(-1, -1)) {
+		spr.draw(w, tm->subBox(selPos));
+	}
+}
+uiSelectionTM::uiSelectionTM(uiTilemap* tm, const spriteparam& src) :uiElement(tm->boxOrigin, tm->sm), spr(src) {
+	this->tm = tm;
+	selPos = {-1, -1};
+}
+
+sf::Vector2i uiSelectionTM::getSelPos() const {
+	return selPos;
+}
+void uiSelectionTM::select(sf::Vector2i pos) {
+	selPos = pos;
+	setFresh(false);
+}
+void uiSelectionTM::click(sf::Vector2i pos) {
+	selPos = (selPos == pos) ? sf::Vector2i(-1,-1) : pos;
+	setFresh(false);
 }
 
 //selector::selector(uint count) {

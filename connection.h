@@ -4,6 +4,17 @@
 #include <SFML/Network.hpp>
 #include <mutex>
 #include <iostream>
+#include <variant>
+
+struct message_t {
+	enum type_t : sf::Int32 {
+		STRING
+	} type;
+	std::unique_ptr<void> data;
+
+	friend sf::Packet& operator<<(sf::Packet& packet, const message_t& message);
+	friend sf::Packet& operator>>(sf::Packet& packet, message_t& message);
+};
 
 class letterSender {
 protected:

@@ -1,5 +1,29 @@
 #include "connection.h"
 
+//sf::Packet& operator<<(sf::Packet& packet, const message_t& message) {
+//	packet << (sf::Int32)(int)message.type;
+//	switch (message.type) {
+//		case message_t::STRING: packet << *(std::string*)message.data.get();
+//			break;
+//
+//	}
+//	return packet;
+//}
+//sf::Packet& operator>>(sf::Packet& packet, message_t& message) {
+//	sf::Int32 t;
+//	packet >> t;
+//	message.type = (message_t::type_t)(int)t;
+//	switch (message.type) {
+//		case message_t::STRING: {
+//			std::string buf;
+//			packet >> buf;
+//			message.data = std::make_unique<std::string>(buf);
+//			break;
+//		}
+//	}
+//	return packet;
+//}
+
 void letterSender::send(const std::string& msg) {
 	if (s != MAILING)return;
 	sf::Packet packet;

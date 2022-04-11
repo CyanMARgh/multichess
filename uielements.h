@@ -68,14 +68,21 @@ protected:
 
 	uiElement(box2 zone, scaleMode sm);
 public:
-	bool visible = true;
-	bool clickable = false;
-	bool pressed = false;
+	uint32_t flags = 0b00000000'00000000'00000000'00000001;
 
-	bool isClickable() const;
 	bool isVisible() const;
+	bool isClickable() const;
+	bool isPressed() const;
+	bool isFresh() const;
+
+	void setVisible(bool visible);
+	void setClickable(bool clickable);
+	void setPressed(bool pressed);
+	void setFresh(bool fresh);
+
 	sf::Vector2f toUnit(sf::Vector2f pos) const;
 
+	virtual void addPartsOrdered(std::vector<uiElement*>& ordered);
 	bool isInside(sf::Vector2f pos) const;
 	virtual void reshape(box2 parentBoxOrigin, box2 parentBoxScaled);
 	void reshape(sf::Vector2f parentSizeOrigin, sf::Vector2f parentBoxScaled);
@@ -83,6 +90,8 @@ public:
 
 	const int NO_HIT = -2, HIT_NO_ACTION = -1;
 	virtual int onMouseEvent(mouseEvent event, sf::Vector2f pos);
+
+	virtual ~uiElement() = default;
 };
 class uiGroup : public uiElement {
 	std::vector<std::unique_ptr<uiElement>> parts;
@@ -94,6 +103,7 @@ protected:
 	int onMouseEvent(mouseEvent event, sf::Vector2f pos) override;
 	virtual box2 getSubBox(uint i);
 public:
+	void addPartsOrdered(std::vector<uiElement *> &ordered) override;
 	explicit uiGroup(box2 zone = box2::unit(), scaleMode sm = scaleMode::fullZone, uint count = 0);
 	void addUIPart(uiElement* uiel);
 	void setPart(uiElement* uiel, uint32_t id);
@@ -114,6 +124,7 @@ public:
 	uiText(box2 zone, scaleMode sm, const std::string& textSrc, const std::string& fontSrc);
 	void setString(const std::string& s);
 };
+class uiSelectionTM;
 class uiTilemap final : public uiElement {
 	std::vector<uint32_t> map;
 	sf::Vector2u gridSize;
@@ -125,6 +136,10 @@ public:
 	uiTilemap(box2 zone, scaleMode sm, const std::string& src, sf::Vector2u srcGridSize, uint32_t beg = 0, uint32_t end = -1);
 	void setIndexes(std::vector<uint32_t> map, sf::Vector2u _gridSize);
 	void setByIndex(uint32_t cellId, uint32_t texId);
+
+	friend class uiSelectionTM;
+	box2 subBox(sf::Vector2i i);
+	sf::Vector2i proj(sf::Vector2f pos);
 };
 class uiInvisibleButton : public uiElement {
 	uint32_t id;
@@ -133,12 +148,32 @@ protected:
 public:
 	uiInvisibleButton(box2 zone, scaleMode sm, uint32_t id);
 };
+//class uiNoAnimButton : public uiInvisibleButton {
+//	sprite spr;
+//protected:
+//	void draw(window* w) override;
+//public:
+//	uiNoAnimButton(box2 zone, scaleMode sm, const spriteparam& sprpar, uint32_t id);
+//};
 class uiButton final : public uiInvisibleButton {
 	sprite sprf, sprp;
 protected:
 	void draw(window* w) override;
 public:
 	uiButton(box2 zone, scaleMode sm, const spriteparam& parFree, const spriteparam& parPressed, uint32_t id);
+};
+class uiSelectionTM : public uiElement {
+	uiTilemap* tm;
+	sprite spr;
+	sf::Vector2i selPos;
+
+	void draw(window *w) override;
+public:
+	uiSelectionTM(uiTilemap* tm, const spriteparam& src);
+
+	sf::Vector2i getSelPos() const;
+	void select(sf::Vector2i pos);
+	void click(sf::Vector2i pos);
 };
 
 //class uiSelectable;

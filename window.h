@@ -23,6 +23,7 @@ class window {
 
 	std::thread renderThread;
 	std::vector<uiElement*> scenes;
+	std::vector<uiElement*> ordered;
 	uint32_t currentScene = 0;
 	appManager* manager = nullptr;
 
@@ -30,16 +31,17 @@ class window {
 	sf::Vector2f sizeOrigin, sizeScaled;
 	std::string name;
 public:
-	void refresh();
+	void refresh(bool check);
 
 	void renderCycle();
 	void startRenderCycle();
 
-	void setScene(uiElement& uiel, uint32_t id);
+	void setScene(uiElement* uiel, uint32_t id);
 	void setManager(appManager& manager);
 	void switchScene(uint32_t sceneId);
 
 	window(const std::string& name, sf::Vector2f size, uint32_t sceneCount);
+	~window();
 	void wait();
 
 	friend class sprbase;
@@ -49,10 +51,10 @@ public:
 
 class appManager {
 protected:
-	uint32_t currentScene = 0;
-	std::vector<uiElement*> uiels;
-	window* w;
 public:
+	uint32_t currentScene = 0;
+	window* w;
+
 	virtual void onKeyEvent(uint32_t keyCode);
 	virtual void onSceneSwitch(uint32_t sceneCode);
 	virtual void onBtnClick(uint32_t btnId, sf::Vector2f pos);
@@ -60,6 +62,13 @@ public:
 	void unblock();
 
 	void switchScene(uint32_t sceneId);
-	void setUiPartsPtrs(std::vector<uiElement*> uiels);
 	explicit appManager(window& w);
+};
+class appManagerDefault : public appManager {
+	typedef std::function<void(uint32_t, sf::Vector2f, appManager*)> obc_t;
+	obc_t _onBtnClick = nullptr;
+
+	void onBtnClick(uint32_t id, sf::Vector2f pos) override;
+public:
+	explicit appManagerDefault(window& w, obc_t _onBtnClick);
 };
