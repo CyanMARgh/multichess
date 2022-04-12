@@ -71,6 +71,7 @@ void demo1() {
 	const int SCENE_0 = 0;
 	const sf::Vector2u gridMetrics = {8, 8};
 	const sf::Vector2u varGridMetrics = {2, 7};
+	board mainBoard(board::EMPTY);
 
 	std::vector<figure> varList = {
 			figures::PAWN | figures::WHITE, figures::PAWN | figures::BLACK,
@@ -117,19 +118,25 @@ void demo1() {
 	appManagerDefault manager(mainWin, [&](uint32_t id, sf::Vector2f pos, appManager* self) {
 		uint32_t snid = (self->currentScene << 16) | id;
 		switch (snid) {
-			case (SCENE_0 << 16) | 2: {
-				auto ipos = varGrid_tm->proj(pos);
-				if (cm::valid(ipos, gridMetrics)) {
-					varGrid_sel->click(ipos);
-				}
-				break;
-			}
 			case (SCENE_0 << 16) | 0: {
 				auto ipos = grid_tm->proj(pos);
 				auto selid = varGrid_sel->getSelPos();
 				if (cm::valid(ipos, gridMetrics) && cm::valid(selid, varGridMetrics)) {
+					uint32_t I = selid.x + selid.y * varGridMetrics.x;
 					grid_tm->setByIndex(ipos.x + ipos.y * gridMetrics.x,
-							varListU32[selid.x + selid.y * varGridMetrics.x]);
+							varListU32[I]);
+					mainBoard.at(ipos.x, ipos.y) = varList[I];
+				}
+				break;
+			}
+			case (SCENE_0 << 16) | 1: {
+				evalText->setString("eval: " + std::to_string(mainBoard.eval()));
+				break;
+			}
+			case (SCENE_0 << 16) | 2: {
+				auto ipos = varGrid_tm->proj(pos);
+				if (cm::valid(ipos, gridMetrics)) {
+					varGrid_sel->click(ipos);
 				}
 				break;
 			}
