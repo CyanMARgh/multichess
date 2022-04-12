@@ -1,8 +1,7 @@
 #include "demos.h"
-#define DEMO(id) demo##id();
+#define DEMO(id) demo##id::demo()
+
 int main() {
-	for (int i = 0; i < 1; i++) {
-		DEMO(1);
-	}
+	DEMO(1);
 	return 0;
 }
