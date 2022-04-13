@@ -1,5 +1,5 @@
 #include "demos.h"
-#define DEMO(id) demo##id::demo()
+#define DEMO(id) demo##id::Demo()
 
 int main() {
 	DEMO(2);

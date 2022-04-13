@@ -1,7 +1,7 @@
 #include "chess.h"
 
-int board::tryStep(sf::Vector2i from, sf::Vector2i to) {
-	figure moved = map[getField(from.x, from.y)];
+int Board::TryStep(sf::Vector2i from, sf::Vector2i to) {
+	Figure moved = map[GetField(from.x, from.y)];
 	using namespace figures;
 	// Проверка корректности перемещения фигуры по ее типу
 	switch (MASKF & moved) {
@@ -19,34 +19,34 @@ int board::tryStep(sf::Vector2i from, sf::Vector2i to) {
 		case PAWN:  //omg
 			break;
 	}
-	figure taken = map[getField(from.x, from.y)];
+	Figure taken = map[GetField(from.x, from.y)];
 
 	return -1;
 }
 
-void board::playStep(step s) {
+void Board::PlayStep(Step s) {
 	if (!s.type) {
-		figure moved = map[s.parts[0].from];
+		Figure moved = map[s.parts[0].from];
 		map[s.parts[0].from] = figures::NONE;
 		map[s.parts[1].from] = moved;
 		return;
 	}
 }
 
-std::pair<uint8_t, uint8_t> board::setField(uint8_t field) {
+std::pair<uint8_t, uint8_t> Board::setField(uint8_t field) {
 	return {field % 8, field / 8};
 }
 
-uint8_t board::getField(uint8_t rank, uint8_t file) {
+uint8_t Board::GetField(uint8_t rank, uint8_t file) {
 	uint8_t field = file * 8 + rank;
 	return field;
 }
 
-board::board(type t) {
+Board::Board(type t) {
 	using namespace figures;
 	switch (t) {
 		case EMPTY: {
-			map = std::vector<figure>(64, NONE);
+			map = std::vector<Figure>(64, NONE);
 			break;
 		}
 		case DEFAULT: {
@@ -69,14 +69,14 @@ board::board(type t) {
 	}
 	flags = 0, timer = 50, story = {}, state = WHITE_TURN;
 }
-figure& board::at(uint8_t x, uint8_t y) {
+Figure& Board::At(uint8_t x, uint8_t y) {
 	return map[x+y*8];
 }
-int board::call(int code) {
+int Board::call(int code) {
 
 	return -1;
 }
-float board::eval() const {
+float Board::Eval() const {
 	int sum = 0;
 	for(auto f: map){
 		sum+=!!f;
