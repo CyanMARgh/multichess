@@ -118,7 +118,8 @@ namespace demo1 {
 		scene0->addUIPart(evalText);
 		scene0->addUIPart(varGrid);
 
-		appManagerDefault manager(mainWin, [&](uint32_t id, sf::Vector2f pos, appManager* self) {
+		appManagerDefault manager(mainWin);
+		manager.obc = [&](uint32_t id, sf::Vector2f pos, appManager* self) {
 			uint32_t snid = (self->currentScene << 16) | id;
 			switch (snid) {
 				case (SCENE_0 << 16) | 0: {
@@ -146,11 +147,43 @@ namespace demo1 {
 				default: assert(false);
 			}
 			self->unblock();
-		});
+		};
 
 		//FINAL
 		mainWin.setManager(manager);
 		mainWin.startRenderCycle();
+		mainWin.wait();
+	}
+}
+namespace demo2 {
+	void demo() {
+		window mainWin("( ._. )/", {1000, 800}, 1);
+		auto shader = new uiShader({100, 100, 200, 500}, scaleMode::scaleXY, "shader0.frag");
+		mainWin.setScene(shader, 0);
+
+		enum state_t {
+			RENDER,
+			STOP
+		} state = RENDER;
+
+		appManagerDefault manager(mainWin);
+		manager.obc = [&](uint32_t id, sf::Vector2f pos, appManager* self) {
+
+		};
+		manager.oe = [&](appManager* self) {
+			self->appManager::onExit();
+			state = STOP;
+		};
+
+		mainWin.setManager(manager);
+		mainWin.startRenderCycle();
+
+		sf::Clock clock;
+		while (state == RENDER) {
+			shader->setTime(clock.getElapsedTime().asSeconds());
+			std::this_thread::sleep_for(std::chrono::milliseconds(10));
+		}
+
 		mainWin.wait();
 	}
 }

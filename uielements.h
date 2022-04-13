@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <unordered_set>
 #include <memory>
+#include <utility>
 
 class window;
 struct spriteparam {
@@ -32,10 +33,6 @@ public:
 	explicit sprite(const spriteparam& par);
 	void draw(window* w, box2 zone);
 };
-class spriteStr {
-	//
-};
-
 class textSprite {
 	sf::Font font;
 	sf::Text text;
@@ -43,6 +40,15 @@ class textSprite {
 public:
 	textSprite(const std::string& fontSrc, const std::string& textSrc);
 	void setText(const std::string& data);
+	void draw(window* w, box2 zone);
+};
+class shaderSprite {
+	sf::RectangleShape rs;
+	sf::Shader sh;
+	float time;
+public:
+	explicit shaderSprite(const std::string& src);
+	void setTime(float time);
 	void draw(window* w, box2 zone);
 };
 
@@ -112,18 +118,27 @@ public:
 class uiImage final : public uiElement {
 protected:
 	sprite spr;
-	void draw(window* w) final;
+	void draw(window* w) override;
 public:
 	uiImage(box2 zone, scaleMode sm, const spriteparam& src);
 };
 class uiText final : public uiElement {
 protected:
 	textSprite spr;
-	void draw(window* w) final;
+	void draw(window* w) override;
 public:
 	uiText(box2 zone, scaleMode sm, const std::string& textSrc, const std::string& fontSrc);
 	void setString(const std::string& s);
 };
+class uiShader final : public uiElement {
+protected:
+	shaderSprite spr;
+	void draw(window* w) final;
+public:
+	uiShader(box2 zone, scaleMode sm, const std::string& src);
+	void setTime(float time);
+};
+
 class uiSelectionTM;
 class uiTilemap final : public uiElement {
 	std::vector<uint32_t> map;

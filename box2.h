@@ -21,6 +21,7 @@ struct box2 {
 	float bottom() const;
 
 	sf::Vector2f rad() const;
+	sf::Vector2f rad2() const;
 	sf::Vector2f center() const;
 
 	float height() const;

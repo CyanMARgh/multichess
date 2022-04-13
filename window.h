@@ -46,6 +46,7 @@ public:
 
 	friend class sprbase;
 	friend class textSprite;
+	friend class shaderSprite;
 	friend class appManager;
 };
 
@@ -66,9 +67,18 @@ public:
 };
 class appManagerDefault : public appManager {
 	typedef std::function<void(uint32_t, sf::Vector2f, appManager*)> obc_t;
-	obc_t _onBtnClick = nullptr;
+	typedef std::function<void(uint32_t, appManager*)> oke_t, oss_t;
+	typedef std::function<void(appManager*)> oe_t;
 
+	void onKeyEvent(uint32_t keyCode) override;
+	void onSceneSwitch(uint32_t sceneCode) override;
 	void onBtnClick(uint32_t id, sf::Vector2f pos) override;
+	void onExit() override;
 public:
-	explicit appManagerDefault(window& w, obc_t _onBtnClick);
+	obc_t obc = [](uint32_t, sf::Vector2f, appManager* am) { am->unblock(); };
+	oke_t oke = [](uint32_t, appManager*) { };
+	oss_t oss = [](uint32_t, appManager*) { };
+	oe_t oe = [](appManager* am) { am->appManager::onExit(); };
+
+	explicit appManagerDefault(window& w);
 };

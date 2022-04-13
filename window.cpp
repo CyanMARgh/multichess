@@ -17,10 +17,19 @@ void appManager::unblock() {
 }
 appManager::appManager(window& w) :w(&w), currentScene(0) { }
 
-void appManagerDefault::onBtnClick(uint32_t id, sf::Vector2f pos) {
-	_onBtnClick(id, pos, this);
+void appManagerDefault::onKeyEvent(uint32_t keyCode) {
+	oke(keyCode, this);
 }
-appManagerDefault::appManagerDefault(window& w, obc_t _onBtnClick) :appManager(w), _onBtnClick(std::move(_onBtnClick)) { }
+void appManagerDefault::onBtnClick(uint32_t id, sf::Vector2f pos) {
+	obc(id, pos, this);
+}
+void appManagerDefault::onSceneSwitch(uint32_t sceneCode) {
+	oss(sceneCode, this);
+}
+void appManagerDefault::onExit() {
+	oe(this);
+}
+appManagerDefault::appManagerDefault(window& w) :appManager(w) { }
 
 void window::refresh(bool check) {
 	if (check) {
@@ -134,7 +143,7 @@ window::window(const std::string& name, sf::Vector2f size, uint32_t sceneCount) 
 	state = PREPARE;
 }
 window::~window() {
-	for(auto* s : scenes) {
+	for (auto* s : scenes) {
 		delete s;
 	}
 }

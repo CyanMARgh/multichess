@@ -74,3 +74,6 @@ sf::Vector2f box2::center() const {
 sf::Vector2f box2::rad() const {
 	return (topRight - bottomLeft) * .5f;
 }
+sf::Vector2f box2::rad2() const {
+	return topRight - bottomLeft;
+}
