@@ -1,6 +1,6 @@
 #include "Window.h"
 
-namespace ui {
+ namespace ui {
 	void AppManager::OnKeyEvent(uint32_t keyCode) { }
 	void AppManager::OnSceneSwitch(uint32_t sceneCode) { }
 	void AppManager::OnExit() {
@@ -15,6 +15,9 @@ namespace ui {
 	}
 	void AppManager::Unblock() {
 		w->state = Window::RUN;
+	}
+	void AppManager::Close() const {
+		w->state = Window::STOP;
 	}
 	AppManager::AppManager(Window& w) :w(&w), currentScene(0) { }
 
@@ -35,16 +38,16 @@ namespace ui {
 	void Window::Refresh(bool check) {
 		if (check) {
 			for (auto* e : ordered) {
-				if (!e->IsFresh()) goto NOT_FRESH;
+				if (!e->Is(Element::FRESH)) goto NOT_FRESH;
 			}
 			return;
 		}
 	NOT_FRESH:
 		for (auto* e : ordered) {
-			e->SetFresh(true);
+			e->Set(Element::FRESH, true);
 		}
 		for (auto* s : scenes) {
-			if (s->IsVisible())s->Reshape(sizeOrigin, sizeScaled);
+			if (s->Is(Element::VISIBLE))s->Reshape(sizeOrigin, sizeScaled);
 		}
 		scenes[currentScene]->Reshape(sizeOrigin, sizeScaled);
 		rw.clear();
@@ -58,10 +61,10 @@ namespace ui {
 		this->manager = &manager;
 	}
 	void Window::SwitchScene(uint32_t sceneId) {
-		scenes[currentScene]->SetVisible(false);
-		scenes[currentScene]->SetClickable(false);
-		scenes[sceneId]->SetVisible(true);
-		scenes[sceneId]->SetClickable(true);
+		scenes[currentScene]->Set(Element::VISIBLE, false);
+		scenes[currentScene]->Set(Element::CLICKABLE, false);
+		scenes[sceneId]->Set(Element::VISIBLE, true);
+		scenes[sceneId]->Set(Element::CLICKABLE, true);
 		currentScene = sceneId;
 		Refresh(false);
 	}
@@ -70,8 +73,8 @@ namespace ui {
 		rw.create(sf::VideoMode((uint)sizeScaled.x, (uint)sizeScaled.y), name);
 		for (int i = 0; i < scenes.size(); i++) {
 			assert(scenes[i]);
-			scenes[i]->SetVisible(!i);
-			scenes[i]->SetClickable(!i);
+			scenes[i]->Set(Element::VISIBLE, !i);
+			scenes[i]->Set(Element::CLICKABLE, !i);
 			scenes[i]->AddPartsOrdered(ordered);
 		}
 		assert(manager);

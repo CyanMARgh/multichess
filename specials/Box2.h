@@ -13,7 +13,7 @@ struct Box2 {
 	Box2(sf::Vector2f bottomLeft, sf::Vector2f topRight);
 	Box2(float l, float b, float r, float t);
 
-	static Box2 unit();
+	static Box2 Unit();
 	Box2 Inv() const;
 	float Left() const;
 	float Top() const;

@@ -27,13 +27,13 @@ namespace ui {
 
 	int Group::OnMouseEvent(MouseEvent event, sf::Vector2f pos) {
 		int res = NO_HIT;
-		if (IsClickable()) {
+		if (Is(CLICKABLE)) {
 			switch (event) {
 				case MouseEvent::pressing: {
 					if (!IsInside(pos))break;
 					res = HIT_NO_ACTION;
 					for (uint i = 0, n = parts.size(); i < n; i++) {
-						if (!parts[i] || !parts[i]->IsClickable()) continue;
+						if (!parts[i] || !parts[i]->Is(CLICKABLE)) continue;
 						int sres = parts[i]->OnMouseEvent(event, pos);
 						if (sres != NO_HIT) {
 							pressedPart = (int)i;
@@ -41,7 +41,7 @@ namespace ui {
 							break;
 						}
 					}
-					SetPressed(true);
+					Set(PRESSED, true);
 					break;
 				}
 				case MouseEvent::holding: {
@@ -54,7 +54,7 @@ namespace ui {
 					if (pressedPart >= 0 && parts[pressedPart]) {
 						res = parts[pressedPart]->OnMouseEvent(event, pos);
 					}
-					SetPressed(false);
+					Set(PRESSED, false);
 					break;
 				}
 			}
@@ -62,7 +62,7 @@ namespace ui {
 		return res;
 	}
 	void Group::Draw(Window* w) {
-		if (IsVisible()) {
+		if (Is(VISIBLE)) {
 			for (auto& e : parts) {
 				if (e) e->Draw(w);
 			}
@@ -70,9 +70,8 @@ namespace ui {
 	}
 	Group::Group(Box2 zone, ScaleMode sm, uint count) :Element(zone, sm) {
 		parts = std::vector<std::unique_ptr<Element>>(count);
-		SetClickable(true);
+		Set(CLICKABLE, true);
 	}
-
 
 	Box2 SideCut::getSubBox(uint i) {
 		sf::Vector2f C = boxScaled.Center();

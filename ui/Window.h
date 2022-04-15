@@ -13,7 +13,6 @@ namespace ui {
 	class AppManager;
 
 	class Window {
-		// исправить на что-то вменяемое, если понадобится
 		enum state_t {
 			PREPARE,
 			BLOCKED,
@@ -61,6 +60,7 @@ namespace ui {
 		virtual void OnSceneSwitch(uint32_t sceneCode);
 		virtual void OnBtnClick(uint32_t btnId, sf::Vector2f pos);
 		virtual void OnExit();
+		void Close() const;
 		void Unblock();
 
 		void SwitchScene(uint32_t sceneId);
@@ -79,7 +79,7 @@ namespace ui {
 		obc_t obc = [](uint32_t, sf::Vector2f, AppManager* am) { am->Unblock(); };
 		oke_t oke = [](uint32_t, AppManager*) { };
 		oss_t oss = [](uint32_t, AppManager*) { };
-		oe_t oe = [](AppManager* am) { am->AppManager::OnExit(); };
+		oe_t oe = [](AppManager* am) { am->Close(); };
 
 		explicit AppManagerDefault(Window& w);
 	};

@@ -38,18 +38,37 @@ namespace ui {
 		}
 	}
 	Sprite::Sprite() {
-		sbptr = nullptr;
+		sbptrs = {};
+		type = {};
 	}
-	Sprite::Sprite(const std::string& src, sf::Vector2u gridMetrics, uint32_t id) {
-		std::string srcf = src + "(" + std::to_string(gridMetrics.x) + ";" + std::to_string(gridMetrics.y) + ")" + std::to_string(id);
-		LoadSpriteSheet(src, gridMetrics);
-		sbptr = *std::find_if(SpriteBase::loadedSprites.begin(), SpriteBase::loadedSprites.end(), [&srcf](const auto& item) {
-			return item->name == srcf;
-		});
+	Sprite::Sprite(const SpriteParam& par) {
+		this->type = par.type;
+		uint32_t sscount =
+				type == SpriteParam::SINGLE ? 1 :
+				type == SpriteParam::SCALE9 ? 9 : 0;
+
+		std::string srcf = par.s + "(" + std::to_string(par.gm.x) + ";" + std::to_string(par.gm.y) + ")";
+		LoadSpriteSheet(par.s, par.gm);
+		sbptrs = std::vector<std::shared_ptr<SpriteBase>>(sscount, nullptr);
+		for (uint32_t i = 0; i < sscount; i++) {
+			sbptrs[i] = *std::find_if(SpriteBase::loadedSprites.begin(), SpriteBase::loadedSprites.end(), [&](const auto& item) {
+				return item->name == srcf + std::to_string(par.i + i);
+			});
+		}
 	}
-	Sprite::Sprite(const SpriteParam& par) :Sprite(par.s, par.gm, par.i) { }
 	void Sprite::Draw(Window* w, Box2 zone) {
-		if (sbptr)sbptr->Draw(w, zone);
+		switch (type) {
+			case SpriteParam::NONE: {
+				assert(false);
+			}
+			case SpriteParam::SINGLE: {
+				sbptrs[0]->Draw(w, zone);
+				break;
+			}
+			case SpriteParam::SCALE9: {
+				break;
+			}
+		}
 	}
 
 	TextSprite::TextSprite(const std::string& fontSrc, const std::string& textSrc) {

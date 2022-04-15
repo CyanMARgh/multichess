@@ -4,6 +4,7 @@
 #include "../ui/Window.h"
 #include "../specials/specials.h"
 #include "../chess/chess.h"
+#include "../ui/formparser.h"
 
 namespace demo0 {
 	void Demo() {
@@ -54,7 +55,6 @@ namespace demo0 {
 		mainWin.Wait();
 	}
 }
-
 namespace demo1 {
 	uint32_t sprIdByFigure(Figure f) {
 		Figure ft = f & figures::MASKF;
@@ -92,33 +92,31 @@ namespace demo1 {
 		for (int i = 0; i < varGridMetrics.x * varGridMetrics.y; i++) {
 			varListU32[i] = sprIdByFigure(varList[i]);
 		}
+
 		auto scene0 = new Group({0, 0, 1000, 800}, ScaleMode::bindTL);
-		mainWin.SetScene(scene0, SCENE_0);
-
 		auto grid = new Group({0, 100, 700, 800}, ScaleMode::bindTL);
-		auto grid_tm = new TileMap(Box2::unit(), ScaleMode::fullZone, "chesstilemap.png", {16, 16});
-		grid_tm->SetIndexes(std::vector<uint32_t>(gridMetrics.x * gridMetrics.y, sprIdByFigure(figures::NONE)), gridMetrics);
-		auto grid_btn = new InvisibleButton(Box2::unit(), ScaleMode::fullZone, 0);
+		scene0->AddUIPart(grid);
+		auto grid_tm = new TileMap(Box2::Unit(), ScaleMode::fullZone, "chesstilemap.png", {16, 16});
 		grid->AddUIPart(grid_tm);
+		auto grid_btn = new InvisibleButton(Box2::Unit(), ScaleMode::fullZone, 0);
 		grid->AddUIPart(grid_btn);
-
 		auto evalText = new Text({0, 0, 700, 100}, ScaleMode::bindTL, "Eval:.....", "Ninja Naruto.ttf");
+		scene0->AddUIPart(evalText);
 		auto evalBtn = new Button({800, 0, 1000, 100}, ScaleMode::bindTL, {"src0.png"}, {"src1.png"}, 1);
-
+		scene0->AddUIPart(evalBtn);
 		auto varGrid = new Group({800, 100, 1000, 800}, ScaleMode::bindTL);
-		auto varGrid_tm = new TileMap(Box2::unit(), ScaleMode::fullZone, "chesstilemap.png", {16, 16});
-		varGrid_tm->SetIndexes(varListU32, varGridMetrics);
-		auto varGrid_sel = new SelectionTM(varGrid_tm, {"src4.png"});
-		auto varGrid_btn = new InvisibleButton(Box2::unit(), ScaleMode::fullZone, 2);
-
+		scene0->AddUIPart(varGrid);
+		auto varGrid_tm = new TileMap(Box2::Unit(), ScaleMode::fullZone, "chesstilemap.png", {16, 16});
 		varGrid->AddUIPart(varGrid_tm);
+		auto varGrid_sel = new SelectionTM(varGrid_tm, {"src4.png"});
 		varGrid->AddUIPart(varGrid_sel);
+		auto varGrid_btn = new InvisibleButton(Box2::Unit(), ScaleMode::fullZone, 2);
 		varGrid->AddUIPart(varGrid_btn);
 
-		scene0->AddUIPart(evalBtn);
-		scene0->AddUIPart(grid);
-		scene0->AddUIPart(evalText);
-		scene0->AddUIPart(varGrid);
+		mainWin.SetScene(scene0, SCENE_0);
+
+		grid_tm->SetIndexes(std::vector<uint32_t>(gridMetrics.x * gridMetrics.y, sprIdByFigure(figures::NONE)), gridMetrics);
+		varGrid_tm->SetIndexes(varListU32, varGridMetrics);
 
 		AppManagerDefault manager(mainWin);
 		manager.obc = [&](uint32_t id, sf::Vector2f pos, AppManager* self) {
@@ -170,7 +168,7 @@ namespace demo2 {
 
 		ui::AppManagerDefault manager(mainWin);
 		manager.oe = [&](ui::AppManager* self) {
-			self->AppManager::OnExit();
+			self->Close();
 			state = STOP;
 		};
 
@@ -182,7 +180,90 @@ namespace demo2 {
 			shader->SetTime(clock.getElapsedTime().asSeconds());
 			std::this_thread::sleep_for(std::chrono::milliseconds(10));
 		}
+		mainWin.Wait();
+	}
+}
+namespace demo3 {
+	uint32_t sprIdByFigure(Figure f) {
+		Figure ft = f & figures::MASKF;
+		Figure fc = f & figures::MASKC;
+		int it = (ft == figures::PAWN) ? 0 :
+				 (ft == figures::BISHOP) ? 1 :
+				 (ft == figures::KNIGHT) ? 2 :
+				 (ft == figures::ROOK) ? 3 :
+				 (ft == figures::QUEEN) ? 4 :
+				 (ft == figures::KING) ? 5 : 15;
+		int ic = (fc == figures::WHITE) ? 0 :
+				 (fc == figures::BLACK) ? 1 : 15;
+		return ic * 16 + it;
+	}
+	void Demo() {
+		using namespace ui;
+		Window mainWin("| _ |", {1000, 800}, 1);
 
+		const sf::Vector2u gridMetrics = {8, 8};
+		const sf::Vector2u varGridMetrics = {2, 7};
+		Board mainBoard(Board::EMPTY);
+
+		std::vector<Figure> varList = {
+				figures::PAWN | figures::WHITE, figures::PAWN | figures::BLACK,
+				figures::BISHOP | figures::WHITE, figures::BISHOP | figures::BLACK,
+				figures::KNIGHT | figures::WHITE, figures::KNIGHT | figures::BLACK,
+				figures::ROOK | figures::WHITE, figures::ROOK | figures::BLACK,
+				figures::QUEEN | figures::WHITE, figures::QUEEN | figures::BLACK,
+				figures::KING | figures::WHITE, figures::KING | figures::BLACK,
+				figures::NONE, figures::NONE,
+		};
+		std::vector<uint32_t> varListU32(varGridMetrics.x * varGridMetrics.y);
+
+		for (int i = 0; i < varGridMetrics.x * varGridMetrics.y; i++) {
+			varListU32[i] = sprIdByFigure(varList[i]);
+		}
+
+		Parser parser;
+		parser.Parse("demo1", mainWin);
+
+		auto grid_tm = (TileMap*)parser["scene0_grid_tm"];
+		auto varGrid_tm = (TileMap*)parser["scene0_varGrid_tm"];
+		auto varGrid_sel = (SelectionTM*)parser["scene0_varGrid_tm_sel"];
+		auto evalText = (Text*)parser["scene0_evalText"];
+
+		AppManagerDefault manager(mainWin);
+		manager.obc = [&](uint32_t id, sf::Vector2f pos, AppManager* self) {
+			uint32_t snid = (self->currentScene << 16) | id;
+			switch (snid) {
+				case (0 << 16) | 0: {
+					auto ipos = grid_tm->Proj(pos);
+					auto selid = varGrid_sel->getSelPos();
+					if (cm::Valid(ipos, gridMetrics) && cm::Valid(selid, varGridMetrics)) {
+						uint32_t I = selid.x + selid.y * varGridMetrics.x;
+						grid_tm->SetByIndex(ipos.x + ipos.y * gridMetrics.x,
+								varListU32[I]);
+						mainBoard.At(ipos.x, ipos.y) = varList[I];
+					}
+					break;
+				}
+				case (0 << 16) | 1: {
+					evalText->SetString("Eval: " + std::to_string(mainBoard.Eval()));
+					break;
+				}
+				case (0 << 16) | 2: {
+					auto ipos = varGrid_tm->Proj(pos);
+					if (cm::Valid(ipos, gridMetrics)) {
+						varGrid_sel->Click(ipos);
+					}
+					break;
+				}
+				default: assert(false);
+			}
+			self->Unblock();
+		};
+
+		grid_tm->SetIndexes(std::vector<uint32_t>(gridMetrics.x * gridMetrics.y, sprIdByFigure(figures::NONE)), gridMetrics);;
+		varGrid_tm->SetIndexes(varListU32, varGridMetrics);
+
+		mainWin.SetManager(manager);
+		mainWin.StartRenderCycle();
 		mainWin.Wait();
 	}
 }

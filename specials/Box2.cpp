@@ -13,7 +13,7 @@ Box2::Box2(sf::FloatRect rect) {
 	bottomLeft = {rect.left, rect.top - rect.height};
 	topRight = {rect.left + rect.width, rect.top};
 }
-Box2 Box2::unit() {
+Box2 Box2::Unit() {
 	return {0, 0, 1, 1};
 }
 Box2 Box2::Inv() const {

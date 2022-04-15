@@ -8,15 +8,12 @@ namespace ui {
 		return boxScaled.Inv() * pos;
 	}
 
-	bool Element::IsVisible() const { return (flags >> 0) & 1; }
-	bool Element::IsClickable() const { return (flags >> 1) & 1; }
-	bool Element::IsPressed() const { return (flags >> 2) & 1; }
-	bool Element::IsFresh() const { return (flags >> 3) & 1; }
-
-	void Element::SetVisible(bool visible) { flags = (flags & ~(1 << 0)) | (visible << 0); }
-	void Element::SetClickable(bool clickable) { flags = (flags & ~(1 << 1)) | (clickable << 1); }
-	void Element::SetPressed(bool pressed) { flags = (flags & ~(1 << 2)) | (pressed << 2); }
-	void Element::SetFresh(bool fresh) { flags = (flags & ~(1 << 3)) | (fresh << 3); }
+	bool Element::Is(Flag flag) const {
+		return flags & flag;
+	}
+	void Element::Set(Flag flag, bool value) {
+		flags = (flags & ~flag) | (value ? flag : 0);
+	}
 
 	void Element::AddPartsOrdered(std::vector<Element*>& ordered) {
 		ordered.push_back(this);
@@ -72,10 +69,8 @@ namespace ui {
 	void Element::Draw(Window* w) { }
 	Element::Element(Box2 zone, ScaleMode sm) :boxOrigin(zone), boxScaled(zone), sm(sm) { }
 
-
-
 	void Image::Draw(Window* w) {
-		if (IsVisible()) {
+		if (Is(VISIBLE)) {
 			spr.Draw(w, boxScaled);
 		}
 	}
@@ -85,7 +80,7 @@ namespace ui {
 		spr.SetText(s);
 	}
 	void Text::Draw(Window* w) {
-		if (IsVisible()) {
+		if (Is(VISIBLE)) {
 			spr.Draw(w, boxScaled);
 		}
 	}
@@ -93,10 +88,10 @@ namespace ui {
 
 	void Shader::SetTime(float time) {
 		spr.SetTime(time);
-		SetFresh(false);
+		Set(FRESH, false);
 	}
 	void Shader::Draw(Window* w) {
-		if (IsVisible()) {
+		if (Is(VISIBLE)) {
 			spr.Draw(w, boxScaled);
 		}
 	}

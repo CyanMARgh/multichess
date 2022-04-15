@@ -10,10 +10,17 @@
 
 namespace ui {
 	class Window;
+	class Sprite;
 	struct SpriteParam {
 		std::string s;
 		sf::Vector2u gm = {1, 1};
-		int i = 0;
+		uint32_t i = 0;
+		enum Type {
+			NONE,
+			SINGLE,
+			SCALE9
+		} type = SINGLE;
+		float size0 = 0.f;
 	};
 	struct SpriteBase {
 		std::string name;
@@ -26,11 +33,11 @@ namespace ui {
 		static std::unordered_set<std::shared_ptr<SpriteBase>> loadedSprites;
 	};
 	class Sprite {
-		std::shared_ptr<SpriteBase> sbptr;
+		std::vector<std::shared_ptr<SpriteBase>> sbptrs;
+		SpriteParam::Type type;
 	public:
 		static void LoadSpriteSheet(const std::string& src, sf::Vector2u gridMetrics);
 		Sprite();
-		explicit Sprite(const std::string& src, sf::Vector2u gridMetrics, uint32_t id);
 		explicit Sprite(const SpriteParam& par);
 		void Draw(Window* w, Box2 zone);
 	};
@@ -77,15 +84,14 @@ namespace ui {
 	public:
 		uint32_t flags = 0b00000000'00000000'00000000'00000001;
 
-		bool IsVisible() const;
-		bool IsClickable() const;
-		bool IsPressed() const;
-		bool IsFresh() const;
-
-		void SetVisible(bool visible);
-		void SetClickable(bool clickable);
-		void SetPressed(bool pressed);
-		void SetFresh(bool fresh);
+		enum Flag : uint32_t {
+			VISIBLE = 1 << 0,
+			CLICKABLE = 1 << 1,
+			PRESSED = 1 << 2,
+			FRESH = 1 << 3
+		};
+		bool Is(Flag flag) const;
+		void Set(Flag flag, bool value);
 
 		sf::Vector2f ToUnit(sf::Vector2f pos) const;
 
@@ -110,8 +116,8 @@ namespace ui {
 		int OnMouseEvent(MouseEvent event, sf::Vector2f pos) override;
 		virtual Box2 getSubBox(uint i);
 	public:
-		void AddPartsOrdered(std::vector<Element *> &ordered) override;
-		explicit Group(Box2 zone = Box2::unit(), ScaleMode sm = ScaleMode::fullZone, uint count = 0);
+		void AddPartsOrdered(std::vector<Element*>& ordered) override;
+		explicit Group(Box2 zone = Box2::Unit(), ScaleMode sm = ScaleMode::fullZone, uint count = 0);
 		void AddUIPart(Element* uiel);
 		void SetPart(Element* uiel, uint32_t id);
 	};
@@ -177,7 +183,7 @@ namespace ui {
 		Sprite spr;
 		sf::Vector2i selPos;
 
-		void Draw(Window *w) override;
+		void Draw(Window* w) override;
 	public:
 		SelectionTM(TileMap* tm, const SpriteParam& src);
 
@@ -190,13 +196,13 @@ namespace ui {
 		Box2 getSubBox(uint i) final;
 		sf::Vector2f subSize;
 	public:
-		explicit SideCut(sf::Vector2f subSize, Box2 zone = Box2::unit(), ScaleMode sm = ScaleMode::fullZone);
+		explicit SideCut(sf::Vector2f subSize, Box2 zone = Box2::Unit(), ScaleMode sm = ScaleMode::fullZone);
 	};
 	class Grid : public Group {
 		Box2 getSubBox(uint i) final;
 		sf::Vector2u metrics;
 	public:
-		explicit Grid(sf::Vector2u metrics, Box2 zone = Box2::unit(), ScaleMode sm = ScaleMode::fullZone);
+		explicit Grid(sf::Vector2u metrics, Box2 zone = Box2::Unit(), ScaleMode sm = ScaleMode::fullZone);
 	};
 }
 
