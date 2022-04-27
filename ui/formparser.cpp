@@ -47,18 +47,26 @@ Box2 Parser::ParseBox(std::ifstream& fin) {
 	}
 	return box;
 }
-ui::SpriteParam Parser::ParseSpriteParam(std::ifstream& fin) {
+ui::Sprite::Param Parser::ParseSpriteParam(std::ifstream& fin) {
 	std::string s = ParseString(fin), buf;
 	fin >> buf;
 	uint32_t sx, sy, i;
+	sf::Vector2f size0 = {0, 0};
+	ui::Sprite::Param::Type t;
 	if (buf == "@") {
 		sx = sy = 1, i = 0;
+		t = ui::Sprite::Param::Type::SINGLE;
 	} else if (buf == ":") {
-		fin >> sx >> sy >> i;
+		fin >> sx >> sy >> i >> buf;
+		ToLover(buf);
+		t = ui::Sprite::Param::GetType(buf);
+		if (t == ui::Sprite::Param::Type::SCALE9) {
+			fin >> size0.x >> size0.y;
+		}
 	} else {
 		assert(false);
 	}
-	return {s, {sx, sy}, i};
+	return {s, {sx, sy}, i, t, size0};
 }
 ui::ScaleMode Parser::ParseScaleMode(std::ifstream& fin) {
 	std::string s;
@@ -83,8 +91,13 @@ std::vector<ui::Element*> Parser::ParseElement(std::vector<std::string>& groupSt
 	ui::ScaleMode sm = ParseScaleMode(fin);
 	std::string fullname = FullName(groupStack, name);
 	std::vector<ui::Element*> ans = {nullptr};
-	if (type == "group") {
-		ans[0] = new ui::Group(zone, sm);
+	if (type == "group" || type == "variant") {
+		if (type == "group") {
+			ans[0] = new ui::Group(zone, sm);
+		} else {
+			ans[0] = new ui::Variant(zone, sm);
+		}
+
 		groupStack.push_back(name);
 		do {
 			auto subEls = ParseElement(groupStack, fin);
@@ -97,6 +110,10 @@ std::vector<ui::Element*> Parser::ParseElement(std::vector<std::string>& groupSt
 			}
 		} while (true);
 		groupStack.pop_back();
+
+		if (type == "variant") {
+			((ui::Variant*)ans[0])->InitVisibility();
+		}
 	} else if (type == "image") {
 		ans[0] = new ui::Image(zone, sm, ParseSpriteParam(fin));
 	} else if (type == "button") {
@@ -136,11 +153,11 @@ std::vector<ui::Element*> Parser::ParseElement(std::vector<std::string>& groupSt
 	}
 	return ans;
 }
-void Parser::Parse(const std::string& path, ui::Window& w) {
+void Parser::Parse(const std::string& path, ui::Window& w, uint32_t scene0) {
 	std::ifstream fin(path);
 	std::vector<std::string> groupStack = {};
 	while (!ParseElement(groupStack, fin).empty());
 	for (uint i = 0, n = scenes.size(); i < n; i++) {
-		w.SetScene(scenes[i], i);
+		w.SetScene(scenes[scene0 + i], i);
 	}
 }

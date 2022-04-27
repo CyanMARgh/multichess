@@ -1,7 +1,7 @@
 #include "uielements.h"
 
 namespace ui {
-	Box2 Group::getSubBox(uint i) {
+	Box2 Group::GetSubBox(uint i) {
 		return boxScaled;
 	}
 	void Group::AddUIPart(Element* uiel) {
@@ -15,7 +15,7 @@ namespace ui {
 		Element::Reshape(parentBoxOrigin, parentBoxScaled);
 		for (uint i = 0, n = parts.size(); i < n; i++) {
 			if (parts[i]) {
-				parts[i]->Reshape(boxOrigin, getSubBox(i));
+				parts[i]->Reshape(boxOrigin, GetSubBox(i));
 			}
 		}
 	}
@@ -73,7 +73,7 @@ namespace ui {
 		Set(CLICKABLE, true);
 	}
 
-	Box2 SideCut::getSubBox(uint i) {
+	Box2 SideCut::GetSubBox(uint i) {
 		sf::Vector2f C = boxScaled.Center();
 		sf::Vector2f s = (boxScaled.topRight - boxScaled.bottomLeft) / subSize;
 		float l = boxScaled.Left();
@@ -106,11 +106,35 @@ namespace ui {
 		this->subSize = subSize;
 	}
 
-	Box2 Grid::getSubBox(uint i) {
+	Box2 Grid::GetSubBox(uint i) {
 		sf::Vector2u I = {i % metrics.x, i / metrics.x};
 		return boxScaled * Box2(sf::Vector2f(I) / sf::Vector2f(metrics), (sf::Vector2f(I) + sf::Vector2f(1, 1)) / sf::Vector2f(metrics));
 	}
 	Grid::Grid(sf::Vector2u metrics, Box2 zone, ScaleMode sm) :Group(zone, sm, metrics.x * metrics.y) {
 		this->metrics = metrics;
+	}
+
+	Box2 Variant::GetSubBox(uint i) {
+		return boxScaled;
+	}
+	Variant::Variant(Box2 zone, ScaleMode sm) :Group(zone, sm) {
+		selected = 0;
+	}
+	void Variant::InitVisibility() {
+		for (uint32_t i = 0, n = parts.size(); i < n; i++) {
+			parts[i]->Set(VISIBLE, i==selected);
+			parts[i]->Set(CLICKABLE, i==selected);
+		}
+	}
+	void Variant::SwitchTo(uint32_t id) {
+		parts[selected]->Set(VISIBLE, false);
+		parts[selected]->Set(CLICKABLE, false);
+		selected = id;
+		parts[selected]->Set(VISIBLE, true);
+		parts[selected]->Set(CLICKABLE, true);
+	}
+
+	void Variant::Draw(Window* w) {
+		parts[selected]->Draw(w);
 	}
 }

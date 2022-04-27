@@ -5,7 +5,9 @@ namespace ui {
 		return boxScaled * Box2(sf::Vector2f(i) / sf::Vector2f(gridSize), (sf::Vector2f(i) + sf::Vector2f(1, 1)) / sf::Vector2f(gridSize));
 	}
 	void TileMap::SetIndexes(std::vector<uint32_t> _map, sf::Vector2u _gridSize) {
-		gridSize = _gridSize;
+		if (_gridSize != sf::Vector2u(-1, -1)) {
+			gridSize = _gridSize;
+		}
 		assert(gridSize.x * gridSize.y == _map.size());
 		map = std::move(_map);
 		Set(FRESH, false);
@@ -43,7 +45,7 @@ namespace ui {
 		}
 	}
 
-	sf::Vector2i SelectionTM::getSelPos() const {
+	sf::Vector2i SelectionTM::GetSelPos() const {
 		return selPos;
 	}
 	void SelectionTM::Select(sf::Vector2i pos) {
@@ -55,7 +57,7 @@ namespace ui {
 		Set(FRESH, false);
 	}
 
-	SelectionTM::SelectionTM(TileMap* tm, const SpriteParam& src) :Element(tm->boxOrigin, tm->sm), spr(src) {
+	SelectionTM::SelectionTM(TileMap* tm, const Sprite::Param& src) :Element(tm->boxOrigin, tm->sm), spr(src) {
 		this->tm = tm;
 		selPos = {-1, -1};
 	}

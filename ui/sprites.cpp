@@ -1,14 +1,14 @@
 #include "uielements.h"
 
 namespace ui {
-	std::unordered_set<std::shared_ptr<SpriteBase>> SpriteBase::loadedSprites = {};
-	SpriteBase::SpriteBase(const sf::Image& img, const std::string& name, sf::IntRect rect) {
+	std::unordered_set<std::shared_ptr<Sprite::Base>> Sprite::loadedSprites = {};
+	Sprite::Base::Base(const sf::Image& img, const std::string& name, sf::IntRect rect) {
 		tex.loadFromImage(img, rect);
 		spr.setTexture(tex);
 		this->name = name;
 		s0 = sf::Vector2u(rect.width, rect.height);
 	}
-	void SpriteBase::Draw(Window* w, Box2 zone) {
+	void Sprite::Base::Draw(Window* w, Box2 zone) {
 		auto sizeScaled = w->sizeScaled;
 		zone = {zone.bottomLeft.x, sizeScaled.y - zone.topRight.y, zone.topRight.x, sizeScaled.y - zone.bottomLeft.y};
 		spr.setPosition(zone.bottomLeft);
@@ -18,10 +18,10 @@ namespace ui {
 	}
 	void Sprite::LoadSpriteSheet(const std::string& src, sf::Vector2u gridMetrics) {
 		std::string prefix = src + "(" + std::to_string(gridMetrics.x) + ";" + std::to_string(gridMetrics.y) + ")";
-		auto _s = std::find_if(SpriteBase::loadedSprites.begin(), SpriteBase::loadedSprites.end(), [&prefix](const auto& item) {
+		auto _s = std::find_if(loadedSprites.begin(), loadedSprites.end(), [&prefix](const auto& item) {
 			return item->name == prefix + "0";
 		});
-		if (_s != SpriteBase::loadedSprites.end()) return;
+		if (_s != loadedSprites.end()) return;
 
 		sf::Image img;
 		img.loadFromFile(src);
@@ -32,40 +32,58 @@ namespace ui {
 		for (int y = 0, i = 0; y < gridMetrics.y; y++) {
 			for (int x = 0; x < gridMetrics.x; x++, i++) {
 				sf::IntRect rect((int)(s0.x * x), (int)(s0.y * y), (int)s0.x, (int)s0.y);
-				std::shared_ptr<SpriteBase> sb(new SpriteBase(img, prefix + std::to_string(i), rect));
-				SpriteBase::loadedSprites.insert(std::move(sb));
+				std::shared_ptr<Base> sb(new Base(img, prefix + std::to_string(i), rect));
+				loadedSprites.insert(std::move(sb));
 			}
 		}
 	}
+	Sprite::Param::Type Sprite::Param::GetType(const std::string& s) {
+		if (s == "scale9") {
+			return SCALE9;
+		} else if (s == "none") {
+			return NONE;
+		} else if (s == "single" || s == "@") {
+			return SINGLE;
+		}
+		assert(0);
+	}
+
 	Sprite::Sprite() {
 		sbptrs = {};
-		type = {};
+		params = {""};
 	}
-	Sprite::Sprite(const SpriteParam& par) {
-		this->type = par.type;
+	Sprite::Sprite(const Param& par) {
+		params = par;
 		uint32_t sscount =
-				type == SpriteParam::SINGLE ? 1 :
-				type == SpriteParam::SCALE9 ? 9 : 0;
+				par.type == Param::SINGLE ? 1 :
+				par.type == Param::SCALE9 ? 9 : 0;
 
 		std::string srcf = par.s + "(" + std::to_string(par.gm.x) + ";" + std::to_string(par.gm.y) + ")";
 		LoadSpriteSheet(par.s, par.gm);
-		sbptrs = std::vector<std::shared_ptr<SpriteBase>>(sscount, nullptr);
+		sbptrs = std::vector<std::shared_ptr<Base>>(sscount, nullptr);
 		for (uint32_t i = 0; i < sscount; i++) {
-			sbptrs[i] = *std::find_if(SpriteBase::loadedSprites.begin(), SpriteBase::loadedSprites.end(), [&](const auto& item) {
-				return item->name == srcf + std::to_string(par.i + i);
+			sbptrs[i] = *std::find_if(loadedSprites.begin(), loadedSprites.end(), [&](const auto& item) {
+				return item->name == srcf + std::to_string(par.beg + i);
 			});
 		}
 	}
 	void Sprite::Draw(Window* w, Box2 zone) {
-		switch (type) {
-			case SpriteParam::NONE: {
+		switch (params.type) {
+			case Param::NONE: {
 				assert(false);
 			}
-			case SpriteParam::SINGLE: {
+			case Param::SINGLE: {
 				sbptrs[0]->Draw(w, zone);
 				break;
 			}
-			case SpriteParam::SCALE9: {
+			case Param::SCALE9: {
+				float xs[4] = {zone.Left(), zone.Left() + params.size0.x * .5f, zone.Right() - params.size0.x * .5f, zone.Right()};
+				float ys[4] = {zone.Bottom(), zone.Bottom() + params.size0.y * .5f, zone.Top() - params.size0.y * .5f, zone.Top()};
+				for (int y = 2, i = 0; y >= 0; y--) {
+					for (int x = 0; x < 3; x++, i++) {
+						sbptrs[i]->Draw(w, {xs[x], ys[y], xs[x + 1], ys[y + 1]});
+					}
+				}
 				break;
 			}
 		}

@@ -1,7 +1,7 @@
 set(SOURCE main/main.cpp ui/Window.cpp
         ui/uitilemap.cpp specials/Box2.cpp connection/connection.cpp
         specials/specials.cpp chess/chess.cpp ui/sprites.cpp ui/uibasic.cpp
-        ui/uibutton.cpp ui/uigroups.cpp ui/formparser.cpp)
+        ui/uibutton.cpp ui/uigroups.cpp ui/formparser.cpp ui/AppManager.cpp pinboard/pinboard.h)
 
 set(PROJECT_NAME multichess)
 

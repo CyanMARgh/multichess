@@ -5,6 +5,7 @@
 #include "../specials/specials.h"
 #include "../chess/chess.h"
 #include "../ui/formparser.h"
+#include "../pinboard/pinboard.h"
 
 namespace demo0 {
 	void Demo() {
@@ -12,26 +13,22 @@ namespace demo0 {
 		Window mainWin("\\@_@/", {1000, 1000}, 2);
 
 		const int SCENE_0 = 0, SCENE_1 = 1;
-		class MainManager : public AppManager {
-			void OnBtnClick(uint32_t id, sf::Vector2f pos) override {
-				uint32_t snid = (currentScene << 16) | id;
-				switch (snid) {
-					case (SCENE_0 << 16) | 0: {
-						SwitchScene(SCENE_1);
-						break;
-					}
-					case (SCENE_1 << 16) | 0: {
-						SwitchScene(SCENE_0);
-						break;
-					}
-					default: assert(false);
+		AppManager manager(mainWin);
+		manager.obc = [&](AppManager* self, uint32_t id, sf::Vector2f pos) {
+			uint32_t snid = (self->currentScene << 16) | id;
+			switch (snid) {
+				case (SCENE_0 << 16) | 0: {
+					self->SwitchScene(SCENE_1);
+					break;
 				}
-				Unblock();
+				case (SCENE_1 << 16) | 0: {
+					self->SwitchScene(SCENE_0);
+					break;
+				}
+				default: assert(false);
 			}
-		public:
-			explicit MainManager(Window& w) :AppManager(w) { }
-		} manager(mainWin);
-
+			self->Unblock();
+		};
 		//SCENE_0
 		auto btn00 = new Button({0, 800, 500, 1000}, ScaleMode::scaleXY, {"src2.png"}, {"src3.png"}, 0);
 		//
@@ -52,7 +49,6 @@ namespace demo0 {
 		mainWin.SetManager(manager);
 
 		mainWin.StartRenderCycle();
-		mainWin.Wait();
 	}
 }
 namespace demo1 {
@@ -118,13 +114,13 @@ namespace demo1 {
 		grid_tm->SetIndexes(std::vector<uint32_t>(gridMetrics.x * gridMetrics.y, sprIdByFigure(figures::NONE)), gridMetrics);
 		varGrid_tm->SetIndexes(varListU32, varGridMetrics);
 
-		AppManagerDefault manager(mainWin);
-		manager.obc = [&](uint32_t id, sf::Vector2f pos, AppManager* self) {
+		AppManager manager(mainWin);
+		manager.obc = [&](AppManager* self, uint32_t id, sf::Vector2f pos) {
 			uint32_t snid = (self->currentScene << 16) | id;
 			switch (snid) {
 				case (SCENE_0 << 16) | 0: {
 					auto ipos = grid_tm->Proj(pos);
-					auto selid = varGrid_sel->getSelPos();
+					auto selid = varGrid_sel->GetSelPos();
 					if (cm::Valid(ipos, gridMetrics) && cm::Valid(selid, varGridMetrics)) {
 						uint32_t I = selid.x + selid.y * varGridMetrics.x;
 						grid_tm->SetByIndex(ipos.x + ipos.y * gridMetrics.x,
@@ -152,7 +148,6 @@ namespace demo1 {
 		//FINAL
 		mainWin.SetManager(manager);
 		mainWin.StartRenderCycle();
-		mainWin.Wait();
 	}
 }
 namespace demo2 {
@@ -166,7 +161,7 @@ namespace demo2 {
 			STOP
 		} state = RENDER;
 
-		ui::AppManagerDefault manager(mainWin);
+		ui::AppManager manager(mainWin);
 		manager.oe = [&](ui::AppManager* self) {
 			self->Close();
 			state = STOP;
@@ -180,7 +175,6 @@ namespace demo2 {
 			shader->SetTime(clock.getElapsedTime().asSeconds());
 			std::this_thread::sleep_for(std::chrono::milliseconds(10));
 		}
-		mainWin.Wait();
 	}
 }
 namespace demo3 {
@@ -228,13 +222,13 @@ namespace demo3 {
 		auto varGrid_sel = (SelectionTM*)parser["scene0_varGrid_tm_sel"];
 		auto evalText = (Text*)parser["scene0_evalText"];
 
-		AppManagerDefault manager(mainWin);
-		manager.obc = [&](uint32_t id, sf::Vector2f pos, AppManager* self) {
+		AppManager manager(mainWin);
+		manager.obc = [&](AppManager* self, uint32_t id, sf::Vector2f pos) {
 			uint32_t snid = (self->currentScene << 16) | id;
 			switch (snid) {
 				case (0 << 16) | 0: {
 					auto ipos = grid_tm->Proj(pos);
-					auto selid = varGrid_sel->getSelPos();
+					auto selid = varGrid_sel->GetSelPos();
 					if (cm::Valid(ipos, gridMetrics) && cm::Valid(selid, varGridMetrics)) {
 						uint32_t I = selid.x + selid.y * varGridMetrics.x;
 						grid_tm->SetByIndex(ipos.x + ipos.y * gridMetrics.x,
@@ -264,6 +258,93 @@ namespace demo3 {
 
 		mainWin.SetManager(manager);
 		mainWin.StartRenderCycle();
-		mainWin.Wait();
+	}
+}
+namespace demo4 {
+	void Demo() {
+		using namespace ui;
+		Window mainWin("<|* _ *|>", {1000, 800}, 1);
+
+		auto* img = new ui::Image({0, 0, 1000, 800}, ScaleMode::fullZone, {"chesstilemap.png", {16, 16}, 32, Sprite::Param::SCALE9, {100, 100}});
+
+		mainWin.SetScene(img, 0);
+
+		AppManager manager(mainWin);
+
+		mainWin.SetManager(manager);
+		mainWin.StartRenderCycle();
+	}
+}
+namespace demo5 {
+	uint32_t GetTextureByPin(Pin p) {
+		return p;
+	}
+	std::vector<uint32_t> GetTexturesByPins(const std::vector<Pin>& pins) {
+		uint32_t n = pins.size();
+		std::vector<uint32_t> ans(n);
+		for (uint32_t i = 0; i < n; i++) {
+			ans[i] = GetTextureByPin(pins[i]);
+		}
+		return ans;
+	}
+
+	void Demo() {
+		using namespace ui;
+		Window mainWin("<|* _ *|>", {1500, 900}, 1);
+
+		Parser parser;
+		parser.Parse("botdemo", mainWin);
+
+		auto board = (ui::TileMap*)parser["scene0_board_tm"];
+		auto var = (ui::Variant*)parser["scene0_v1"];
+
+		Pinboard pinboard(10);
+		board->SetIndexes(GetTexturesByPins(pinboard.GetData()), {10, 10});
+		enum State {
+			PLAYER,
+			BOT,
+			END
+		} state = PLAYER;
+
+		AppManager manager(mainWin);
+		manager.obc = [&](AppManager* self, uint32_t id, sf::Vector2f pos) {
+			if (id == 0) {
+				self->OnExit();
+			} else if (id == 1) {
+				if (state == PLAYER) {
+					auto p = board->Proj(pos);
+					pinboard.step(p.x, p.y, rand() % pins::MAX);
+					board->SetIndexes(GetTexturesByPins(pinboard.GetData()));
+					state = BOT;
+					var->SwitchTo(1);
+				}
+			}
+			self->Unblock();
+		};
+		manager.oe = [&](AppManager* self) {
+			pinboard.SetState(Pinboard::END);
+			state = END;
+			self->Close();
+		};
+
+		mainWin.SetManager(manager);
+		mainWin.StartRenderCycle();
+
+		while (state != END) {
+			switch (state) {
+				case PLAYER: {
+					break;
+				}
+				case BOT: {
+					if (pinboard.GetState() == Pinboard::PLAYER) {
+						board->SetIndexes(GetTexturesByPins(pinboard.GetData()));
+						state = PLAYER;
+						var->SwitchTo(0);
+					}
+					break;
+				}
+				default:break;
+			}
+		}
 	}
 }

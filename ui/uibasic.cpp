@@ -74,7 +74,7 @@ namespace ui {
 			spr.Draw(w, boxScaled);
 		}
 	}
-	Image::Image(Box2 zone, ScaleMode sm, const SpriteParam& src) :Element(zone, sm), spr(src) { }
+	Image::Image(Box2 zone, ScaleMode sm, const Sprite::Param& src) :Element(zone, sm), spr(src) { }
 
 	void Text::SetString(const std::string& s) {
 		spr.SetText(s);

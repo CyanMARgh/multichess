@@ -1,47 +1,12 @@
 #include "Window.h"
 
- namespace ui {
-	void AppManager::OnKeyEvent(uint32_t keyCode) { }
-	void AppManager::OnSceneSwitch(uint32_t sceneCode) { }
-	void AppManager::OnExit() {
-		w->state = Window::STOP;
-	}
-	void AppManager::OnBtnClick(uint32_t btnId, sf::Vector2f pos) {
-		Unblock();
-	}
-	void AppManager::SwitchScene(uint32_t sceneId) {
-		currentScene = sceneId;
-		w->SwitchScene(sceneId);
-	}
-	void AppManager::Unblock() {
-		w->state = Window::RUN;
-	}
-	void AppManager::Close() const {
-		w->state = Window::STOP;
-	}
-	AppManager::AppManager(Window& w) :w(&w), currentScene(0) { }
-
-	void AppManagerDefault::OnKeyEvent(uint32_t keyCode) {
-		oke(keyCode, this);
-	}
-	void AppManagerDefault::OnBtnClick(uint32_t id, sf::Vector2f pos) {
-		obc(id, pos, this);
-	}
-	void AppManagerDefault::OnSceneSwitch(uint32_t sceneCode) {
-		oss(sceneCode, this);
-	}
-	void AppManagerDefault::OnExit() {
-		oe(this);
-	}
-	AppManagerDefault::AppManagerDefault(Window& w) :AppManager(w) { }
-
+namespace ui {
 	void Window::Refresh(bool check) {
-		if (check) {
-			for (auto* e : ordered) {
-				if (!e->Is(Element::FRESH)) goto NOT_FRESH;
-			}
-			return;
+		if (!check) goto NOT_FRESH;
+		for (auto* e : ordered) {
+			if (!e->Is(Element::FRESH) && e->Is(Element::VISIBLE)) goto NOT_FRESH;
 		}
+		return;
 	NOT_FRESH:
 		for (auto* e : ordered) {
 			e->Set(Element::FRESH, true);
@@ -70,7 +35,10 @@
 	}
 
 	void Window::RenderCycle() {
-		rw.create(sf::VideoMode((uint)sizeScaled.x, (uint)sizeScaled.y), name);
+		sf::ContextSettings settings;
+		settings.antialiasingLevel = 10;
+
+		rw.create(sf::VideoMode((uint)sizeScaled.x, (uint)sizeScaled.y), name, sf::Style::Default, settings);
 		for (int i = 0; i < scenes.size(); i++) {
 			assert(scenes[i]);
 			scenes[i]->Set(Element::VISIBLE, !i);
@@ -84,8 +52,10 @@
 		state = RUN;
 
 		while (rw.isOpen()) {
-			if (state == STOP)
+			if (state == STOP) {
+				rw.close();
 				break;
+			}
 			sf::Event e{};
 			sf::Vector2f pos = (sf::Vector2f)sf::Mouse::getPosition(rw);
 			pos.y = sizeScaled.y - pos.y;
@@ -147,11 +117,9 @@
 		state = PREPARE;
 	}
 	Window::~Window() {
+		renderThread.join();
 		for (auto* s : scenes) {
 			delete s;
 		}
-	}
-	void Window::Wait() {
-		renderThread.join();
 	}
 }

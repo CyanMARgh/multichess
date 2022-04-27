@@ -42,9 +42,8 @@ namespace ui {
 
 		Window(const std::string& name, sf::Vector2f size, uint32_t sceneCount);
 		~Window();
-		void Wait();
 
-		friend class SpriteBase;
+		friend class Sprite;
 		friend class TextSprite;
 		friend class ShaderSprite;
 		friend class AppManager;
@@ -56,31 +55,23 @@ namespace ui {
 		uint32_t currentScene = 0;
 		Window* w;
 
-		virtual void OnKeyEvent(uint32_t keyCode);
-		virtual void OnSceneSwitch(uint32_t sceneCode);
-		virtual void OnBtnClick(uint32_t btnId, sf::Vector2f pos);
-		virtual void OnExit();
+		void OnKeyEvent(uint32_t keyCode);
+		void OnSceneSwitch(uint32_t sceneCode);
+		void OnBtnClick(uint32_t btnId, sf::Vector2f pos);
+		void OnExit();
 		void Close() const;
-		void Unblock();
+		void Unblock() const;
+
+		typedef std::function<void(AppManager*, uint32_t, sf::Vector2f)> obc_t;
+		typedef std::function<void(AppManager*, uint32_t)> oke_t, oss_t;
+		typedef std::function<void(AppManager*)> oe_t;
+
+		obc_t obc = [](AppManager* self, uint32_t, sf::Vector2f) { self->Unblock(); };
+		oke_t oke = [](AppManager* self, uint32_t) { };
+		oss_t oss = [](AppManager* self, uint32_t) { };
+		oe_t oe = [](AppManager* self) { self->Close(); };
 
 		void SwitchScene(uint32_t sceneId);
 		explicit AppManager(Window& w);
-	};
-	class AppManagerDefault : public AppManager {
-		typedef std::function<void(uint32_t, sf::Vector2f, AppManager*)> obc_t;
-		typedef std::function<void(uint32_t, AppManager*)> oke_t, oss_t;
-		typedef std::function<void(AppManager*)> oe_t;
-
-		void OnKeyEvent(uint32_t keyCode) override;
-		void OnSceneSwitch(uint32_t sceneCode) override;
-		void OnBtnClick(uint32_t id, sf::Vector2f pos) override;
-		void OnExit() override;
-	public:
-		obc_t obc = [](uint32_t, sf::Vector2f, AppManager* am) { am->Unblock(); };
-		oke_t oke = [](uint32_t, AppManager*) { };
-		oss_t oss = [](uint32_t, AppManager*) { };
-		oe_t oe = [](AppManager* am) { am->Close(); };
-
-		explicit AppManagerDefault(Window& w);
 	};
 }
