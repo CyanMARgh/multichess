@@ -41,6 +41,7 @@ namespace ui {
 		void SwitchScene(uint32_t sceneId);
 
 		Window(const std::string& name, sf::Vector2f size, uint32_t sceneCount);
+		void Wait();
 		~Window();
 
 		friend class Sprite;
@@ -73,5 +74,8 @@ namespace ui {
 
 		void SwitchScene(uint32_t sceneId);
 		explicit AppManager(Window& w);
+		AppManager(const AppManager&) = delete;
+		const AppManager& operator=(const AppManager&) = delete;
+		~AppManager();
 	};
 }

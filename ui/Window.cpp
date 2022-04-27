@@ -116,6 +116,9 @@ namespace ui {
 		this->name = name;
 		state = PREPARE;
 	}
+	void Window::Wait() {
+		//renderThread.join();
+	}
 	Window::~Window() {
 		renderThread.join();
 		for (auto* s : scenes) {
