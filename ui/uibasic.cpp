@@ -74,7 +74,9 @@ namespace ui {
 			spr.Draw(w, boxScaled);
 		}
 	}
-	Image::Image(Box2 zone, ScaleMode sm, const Sprite::Param& src) :Element(zone, sm), spr(src) { }
+	Image::Image(Box2 zone, ScaleMode sm, const Sprite::Param& src) :Element(zone, sm), spr(src) {
+		Set(VISIBLE, true);
+	}
 
 	void Text::SetString(const std::string& s) {
 		spr.SetText(s);
@@ -84,16 +86,20 @@ namespace ui {
 			spr.Draw(w, boxScaled);
 		}
 	}
-	Text::Text(Box2 zone, ScaleMode sm, const std::string& textSrc, const std::string& fontSrc) :Element(zone, sm), spr(fontSrc, textSrc) { }
-
-	void Shader::SetTime(float time) {
-		spr.SetTime(time);
-		Set(FRESH, false);
+	Text::Text(Box2 zone, ScaleMode sm, const std::string& textSrc, const std::string& fontSrc) :Element(zone, sm), spr(fontSrc, textSrc) {
+		Set(VISIBLE, true);
 	}
+
 	void Shader::Draw(Window* w) {
+		uniform_mtx.lock();
+//		printf("[2]\n");
 		if (Is(VISIBLE)) {
+//			printf("[3]\n");
 			spr.Draw(w, boxScaled);
 		}
+		uniform_mtx.unlock();
 	}
-	Shader::Shader(Box2 zone, ScaleMode sm, const std::string& src) :Element(zone, sm), spr(src) { }
+	Shader::Shader(Box2 zone, ScaleMode sm, const std::string& src) :Element(zone, sm), spr(src) {
+		Set(VISIBLE, true);
+	}
 }

@@ -28,7 +28,9 @@ namespace ui {
 	}
 	AppManager::AppManager(Window& w) :w(&w), currentScene(0) { }
 	AppManager::~AppManager() {
-		while (w->state != Window::STOP && w->state != Window::ERROR);
+		while (w->state != Window::STOP && w->state != Window::ERROR) {
+//			printf("-");
+		}
 	}
 
 }

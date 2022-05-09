@@ -116,17 +116,24 @@ namespace ui {
 	}
 
 	ShaderSprite::ShaderSprite(const std::string& src) {
-		assert(sh.loadFromFile(src, sf::Shader::Fragment));
-		time = 0;
-	}
-	void ShaderSprite::SetTime(float _time) {
-		time = _time;
+		sh.loadFromFile(src, sf::Shader::Fragment);
 	}
 	void ShaderSprite::Draw(Window* w, Box2 zone) {
+//		printf("[4]\n");
 		auto sizeScaled = w->sizeScaled;
-		sh.setUniform("u_time", time);
-		sh.setUniform("u_bl", (sf::Glsl::Vec2)zone.bottomLeft);
-		sh.setUniform("u_tr", (sf::Glsl::Vec2)zone.topRight);
+
+		SetUniform("u_bl", (sf::Glsl::Vec2)zone.bottomLeft);
+		SetUniform("u_tr", (sf::Glsl::Vec2)zone.topRight);
+
+		for(const auto& p : uniformsFloat) {
+			sh.setUniform(p.first, p.second);
+		}
+		for(const auto& p : uniformsVec2) {
+			sh.setUniform(p.first, p.second);
+		}
+		for(const auto& p : uniformsTex) {
+			sh.setUniform(p.first, *p.second);
+		}
 
 		zone = {zone.bottomLeft.x, sizeScaled.y - zone.topRight.y, zone.topRight.x, sizeScaled.y - zone.bottomLeft.y};
 		rs.setSize(zone.Rad2());

@@ -33,5 +33,7 @@ namespace ui {
 		}
 	}
 	Button::Button(Box2 zone, ScaleMode sm, const Sprite::Param& parFree, const Sprite::Param& parPressed, uint32_t id) :
-			InvisibleButton(zone, sm, id), sprf(parFree), sprp(parPressed) { }
+			InvisibleButton(zone, sm, id), sprf(parFree), sprp(parPressed) {
+		Set(VISIBLE, true);
+	}
 }

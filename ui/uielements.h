@@ -6,7 +6,7 @@
 #include <cstdint>
 #include <unordered_set>
 #include <memory>
-#include <utility>
+#include <mutex>
 
 namespace ui {
 	class Window;
@@ -48,7 +48,6 @@ namespace ui {
 
 		friend class Window;
 	};
-
 	class TextSprite {
 		sf::Font font;
 		sf::Text text;
@@ -61,11 +60,34 @@ namespace ui {
 	class ShaderSprite {
 		sf::RectangleShape rs;
 		sf::Shader sh;
-		float time;
+		std::unordered_map<std::string, float> uniformsFloat{};
+		std::unordered_map<std::string, std::shared_ptr<sf::Texture>> uniformsTex{};
+		std::unordered_map<std::string, sf::Vector2f> uniformsVec2{};
 	public:
 		explicit ShaderSprite(const std::string& src);
-		void SetTime(float time);
+
+		void SetUniform(const std::string& name, float val) {
+			uniformsFloat[name] = val;
+		}
+		void SetUniform(const std::string& name, sf::Vector2f val) {
+			uniformsVec2[name] = val;
+		}
+		void SetUniform(const std::string& name, const std::string& src) {
+			std::shared_ptr<sf::Texture> tex = nullptr;
+			auto found = uniformsTex.find(name);
+			if(found == uniformsTex.end()) {
+				tex = std::make_shared<sf::Texture>();
+				tex->loadFromFile(src);
+				uniformsTex.insert({name, tex});
+			} else {
+				tex = found->second;
+			}
+		}
+
 		void Draw(Window* w, Box2 zone);
+
+		ShaderSprite(const ShaderSprite&) = delete;
+		ShaderSprite& operator=(const ShaderSprite&) = delete;
 	};
 
 	enum class ScaleMode {
@@ -90,7 +112,7 @@ namespace ui {
 
 		Element(Box2 zone, ScaleMode sm);
 	public:
-		uint32_t flags = 0b00000000'00000000'00000000'00000001;
+		uint32_t flags = 0b00000000'00000000'00000000'00000000;
 
 		enum Flag : uint32_t {
 			VISIBLE = 1 << 0,
@@ -151,7 +173,14 @@ namespace ui {
 		void Draw(Window* w) final;
 	public:
 		Shader(Box2 zone, ScaleMode sm, const std::string& src);
-		void SetTime(float time);
+		std::mutex uniform_mtx;
+		template<typename T>
+		void SetUniform(const std::string& name, T arg) {
+			uniform_mtx.lock();
+			Set(FRESH, false);
+			spr.SetUniform(name, arg);
+			uniform_mtx.unlock();
+		}
 	};
 
 	class SelectionTM;

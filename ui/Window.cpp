@@ -4,10 +4,14 @@ namespace ui {
 	void Window::Refresh(bool check) {
 		if (!check) goto NOT_FRESH;
 		for (auto* e : ordered) {
-			if (!e->Is(Element::FRESH) && e->Is(Element::VISIBLE)) goto NOT_FRESH;
+			if (!e->Is(Element::FRESH) && e->Is(Element::VISIBLE)) {
+				goto NOT_FRESH;
+			}
 		}
+//		printf("[0]\n");
 		return;
 	NOT_FRESH:
+		//printf("[1]\n");
 		for (auto* e : ordered) {
 			e->Set(Element::FRESH, true);
 		}
@@ -34,6 +38,14 @@ namespace ui {
 		Refresh(false);
 	}
 
+	void Window::RefreshMousePos() {
+		mousePos = (sf::Vector2f)sf::Mouse::getPosition(rw);
+		mousePos.y = sizeScaled.y - mousePos.y;
+	}
+	sf::Vector2f Window::GetMousePos() const {
+		return mousePos;
+	}
+
 	void Window::RenderCycle() {
 		sf::ContextSettings settings;
 		settings.antialiasingLevel = 10;
@@ -57,8 +69,7 @@ namespace ui {
 				break;
 			}
 			sf::Event e{};
-			sf::Vector2f pos = (sf::Vector2f)sf::Mouse::getPosition(rw);
-			pos.y = sizeScaled.y - pos.y;
+			RefreshMousePos();
 			while (rw.pollEvent(e)) {
 				switch (e.type) {
 					case sf::Event::Closed : {
@@ -74,7 +85,7 @@ namespace ui {
 					}
 					case sf::Event::MouseButtonPressed : {
 						if (state == BLOCKED)break;
-						int res = scenes[currentScene]->OnMouseEvent(MouseEvent::pressing, pos);
+						int res = scenes[currentScene]->OnMouseEvent(MouseEvent::pressing, mousePos);
 						if (res >= -1) {
 							pressed = true;
 						}
@@ -82,11 +93,11 @@ namespace ui {
 					}
 					case sf::Event::MouseButtonReleased : {
 						if (state == BLOCKED)break;
-						int res = scenes[currentScene]->OnMouseEvent(MouseEvent::release, pos);
+						int res = scenes[currentScene]->OnMouseEvent(MouseEvent::release, mousePos);
 						pressed = false;
 						if (res > -1) {
 							state = BLOCKED;
-							manager->OnBtnClick(res, pos);
+							manager->OnBtnClick(res, mousePos);
 						}
 						break;
 					}
@@ -100,8 +111,10 @@ namespace ui {
 				}
 			}
 			if (pressed && state != BLOCKED) {
-				scenes[currentScene]->OnMouseEvent(MouseEvent::holding, pos);
+				scenes[currentScene]->OnMouseEvent(MouseEvent::holding, mousePos);
 			}
+
+//			printf("%f %f\n", mousePos.x, mousePos.y);
 			Refresh(true);
 		}
 		rw.close();

@@ -90,7 +90,7 @@ std::vector<ui::Element*> Parser::ParseElement(std::vector<std::string>& groupSt
 	zone = ParseBox(fin);
 	ui::ScaleMode sm = ParseScaleMode(fin);
 	std::string fullname = FullName(groupStack, name);
-	std::vector<ui::Element*> ans = {nullptr};
+	std::vector < ui::Element * > ans = {nullptr};
 	if (type == "group" || type == "variant") {
 		if (type == "group") {
 			ans[0] = new ui::Group(zone, sm);
@@ -116,6 +116,8 @@ std::vector<ui::Element*> Parser::ParseElement(std::vector<std::string>& groupSt
 		}
 	} else if (type == "image") {
 		ans[0] = new ui::Image(zone, sm, ParseSpriteParam(fin));
+	} else if (type == "shader") {
+		ans[0] = new ui::Shader(zone, sm, ParseString(fin));
 	} else if (type == "button") {
 		auto srcf = ParseSpriteParam(fin);
 		auto srcp = ParseSpriteParam(fin);

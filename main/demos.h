@@ -172,7 +172,7 @@ namespace demo2 {
 
 		sf::Clock clock;
 		while (state == RENDER) {
-			shader->SetTime(clock.getElapsedTime().asSeconds());
+			shader->SetUniform("u_time", clock.getElapsedTime().asSeconds());
 			std::this_thread::sleep_for(std::chrono::milliseconds(10));
 		}
 	}
@@ -346,5 +346,66 @@ namespace demo5 {
 				default:break;
 			}
 		}
+	}
+}
+namespace demo6 {
+	void Demo() {
+		using namespace ui;
+		Window mainWin("zoom demo", {1500, 900}, 1);
+
+		Parser parser;
+		parser.Parse("zoomdemo", mainWin);
+
+		auto shader = (ui::Shader*)parser["g0_sh0"];
+
+		enum State {
+			WORK,
+			END
+		} state = WORK;
+
+		AppManager manager(mainWin);
+		manager.oe = [&](AppManager* self) {
+			state = END;
+			self->Close();
+		};
+		shader->SetUniform("u_src", "src0.png");
+		mainWin.SetManager(manager);
+		mainWin.StartRenderCycle();
+
+		sf::Clock clock;
+		while(state != END) {
+			std::this_thread::sleep_for(std::chrono::milliseconds(10));
+			auto pos = mainWin.GetMousePos();
+//			printf("%f %f\n", pos.x, pos.y);
+			shader->SetUniform("u_mouse", pos);
+			shader->SetUniform("u_time", clock.getElapsedTime().asSeconds());
+		}
+
+			//printf("%d\n", tex->getSize().x);
+			//std::this_thread::sleep_for(std::chrono::seconds(1));
+//			shader->Set(Element::FRESH, false);
+//
+//		shader->SetUniform("u_W", .5f);
+
+
+			//printf("-");
+//			shader->SetUniform("u_src", tex);
+		//	std::this_thread::sleep_for(std::chrono::seconds(1));
+		//		while (state != END) {
+//			switch (state) {
+//				case PLAYER: {
+//					break;
+//				}
+//				case BOT: {
+//					if (pinboard.GetState() == Pinboard::PLAYER) {
+//						board->SetIndexes(GetTexturesByPins(pinboard.GetData()));
+//						state = PLAYER;
+//						var->SwitchTo(0);
+//					}
+//					break;
+//				}
+//				default:break;
+//			}
+//		}
 	}
 }

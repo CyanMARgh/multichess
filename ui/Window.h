@@ -7,6 +7,7 @@
 #include <functional>
 #include <cassert>
 #include <thread>
+#include <mutex>
 
 namespace ui {
 	class Element;
@@ -27,10 +28,15 @@ namespace ui {
 		uint32_t currentScene = 0;
 		AppManager* manager = nullptr;
 
-		sf::RenderWindow rw;
 		sf::Vector2f sizeOrigin, sizeScaled;
 		std::string name;
+		sf::RenderWindow rw;
+
+		sf::Vector2f mousePos;
+		void RefreshMousePos();
 	public:
+
+		sf::Vector2f GetMousePos() const;
 		void Refresh(bool check);
 
 		void RenderCycle();
