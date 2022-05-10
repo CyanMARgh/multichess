@@ -36,6 +36,7 @@ namespace ui {
 		}
 	}
 	TileMap::TileMap(Box2 zone, ScaleMode sm, const std::string& src, sf::Vector2u srcGridSize, uint32_t beg, uint32_t end) :Element(zone, sm) {
+		Set(VISIBLE, true);
 		map = {};
 		gridSize = {};
 		if (end == -1) end = srcGridSize.x * srcGridSize.y;
@@ -60,6 +61,7 @@ namespace ui {
 	SelectionTM::SelectionTM(TileMap* tm, const Sprite::Param& src) :Element(tm->boxOrigin, tm->sm), spr(src) {
 		this->tm = tm;
 		selPos = {-1, -1};
+		Set(VISIBLE, true);
 	}
 	void SelectionTM::Draw(Window* w) {
 		if (selPos != sf::Vector2i(-1, -1)) {

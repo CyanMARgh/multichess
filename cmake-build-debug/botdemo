@@ -12,6 +12,3 @@ group scene0 : 0 0 1500 900 bindTL
     image _2 :  75   150   275   350 bindTL "src0.png" @
 @
 @
-
-
-scene0_board_tm

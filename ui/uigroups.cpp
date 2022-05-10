@@ -71,6 +71,7 @@ namespace ui {
 	Group::Group(Box2 zone, ScaleMode sm, uint count) :Element(zone, sm) {
 		parts = std::vector<std::unique_ptr<Element>>(count);
 		Set(CLICKABLE, true);
+		Set(VISIBLE, true);
 	}
 
 	Box2 SideCut::GetSubBox(uint i) {

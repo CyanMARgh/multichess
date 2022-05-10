@@ -2,6 +2,6 @@
 #define DEMO(id) demo##id::Demo()
 
 int main() {
-	DEMO(6);
+	DEMO(3);
 	return 0;
 }
