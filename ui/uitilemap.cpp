@@ -10,11 +10,11 @@ namespace ui {
 		}
 		assert(gridSize.x * gridSize.y == _map.size());
 		map = std::move(_map);
-		Set(FRESH, false);
+		fresh = false;
 	}
 	void TileMap::SetByIndex(uint32_t cellId, uint32_t texId) {
 		map[cellId] = texId;
-		Set(FRESH, false);
+		fresh = false;
 	}
 	sf::Vector2i TileMap::Proj(sf::Vector2f pos) {
 		pos = ToUnit(pos);
@@ -25,7 +25,7 @@ namespace ui {
 	}
 
 	void TileMap::Draw(Window* w) {
-		if (Is(VISIBLE)) {
+		if (visible) {
 			sf::Vector2i i;
 			int j = 0;
 			for (i.y = 0; i.y < gridSize.y; i.y++) {
@@ -36,7 +36,7 @@ namespace ui {
 		}
 	}
 	TileMap::TileMap(Box2 zone, ScaleMode sm, const std::string& src, sf::Vector2u srcGridSize, uint32_t beg, uint32_t end) :Element(zone, sm) {
-		Set(VISIBLE, true);
+		visible = true;
 		map = {};
 		gridSize = {};
 		if (end == -1) end = srcGridSize.x * srcGridSize.y;
@@ -51,17 +51,17 @@ namespace ui {
 	}
 	void SelectionTM::Select(sf::Vector2i pos) {
 		selPos = pos;
-		Set(FRESH, false);
+		fresh = false;
 	}
 	void SelectionTM::Click(sf::Vector2i pos) {
 		selPos = (selPos == pos) ? sf::Vector2i(-1, -1) : pos;
-		Set(FRESH, false);
+		fresh = false;
 	}
 
 	SelectionTM::SelectionTM(TileMap* tm, const Sprite::Param& src) :Element(tm->boxOrigin, tm->sm), spr(src) {
 		this->tm = tm;
 		selPos = {-1, -1};
-		Set(VISIBLE, true);
+		visible = true;
 	}
 	void SelectionTM::Draw(Window* w) {
 		if (selPos != sf::Vector2i(-1, -1)) {

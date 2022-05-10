@@ -27,13 +27,13 @@ namespace ui {
 
 	int Group::OnMouseEvent(MouseEvent event, sf::Vector2f pos) {
 		int res = NO_HIT;
-		if (Is(CLICKABLE)) {
+		if (clickable) {
 			switch (event) {
 				case MouseEvent::pressing: {
 					if (!IsInside(pos))break;
 					res = HIT_NO_ACTION;
 					for (uint i = 0, n = parts.size(); i < n; i++) {
-						if (!parts[i] || !parts[i]->Is(CLICKABLE)) continue;
+						if (!parts[i] || !parts[i]->clickable) continue;
 						int sres = parts[i]->OnMouseEvent(event, pos);
 						if (sres != NO_HIT) {
 							pressedPart = (int)i;
@@ -41,7 +41,7 @@ namespace ui {
 							break;
 						}
 					}
-					Set(PRESSED, true);
+					pressed = true;
 					break;
 				}
 				case MouseEvent::holding: {
@@ -54,7 +54,7 @@ namespace ui {
 					if (pressedPart >= 0 && parts[pressedPart]) {
 						res = parts[pressedPart]->OnMouseEvent(event, pos);
 					}
-					Set(PRESSED, false);
+					pressed = false;
 					break;
 				}
 			}
@@ -62,7 +62,7 @@ namespace ui {
 		return res;
 	}
 	void Group::Draw(Window* w) {
-		if (Is(VISIBLE)) {
+		if (visible) {
 			for (auto& e : parts) {
 				if (e) e->Draw(w);
 			}
@@ -70,8 +70,8 @@ namespace ui {
 	}
 	Group::Group(Box2 zone, ScaleMode sm, uint count) :Element(zone, sm) {
 		parts = std::vector<std::unique_ptr<Element>>(count);
-		Set(CLICKABLE, true);
-		Set(VISIBLE, true);
+		clickable = true;
+		visible = true;
 	}
 
 	Box2 SideCut::GetSubBox(uint i) {
@@ -123,16 +123,16 @@ namespace ui {
 	}
 	void Variant::InitVisibility() {
 		for (uint32_t i = 0, n = parts.size(); i < n; i++) {
-			parts[i]->Set(VISIBLE, i==selected);
-			parts[i]->Set(CLICKABLE, i==selected);
+			parts[i]->visible = i==selected;
+			parts[i]->clickable = i==selected;
 		}
 	}
 	void Variant::SwitchTo(uint32_t id) {
-		parts[selected]->Set(VISIBLE, false);
-		parts[selected]->Set(CLICKABLE, false);
+		parts[selected]->visible = false;
+		parts[selected]->clickable = false;
 		selected = id;
-		parts[selected]->Set(VISIBLE, true);
-		parts[selected]->Set(CLICKABLE, true);
+		parts[selected]->visible = true;
+		parts[selected]->clickable = true;
 	}
 
 	void Variant::Draw(Window* w) {

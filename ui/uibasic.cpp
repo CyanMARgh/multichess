@@ -8,13 +8,6 @@ namespace ui {
 		return boxScaled.Inv() * pos;
 	}
 
-	bool Element::Is(Flag flag) const {
-		return flags & flag;
-	}
-	void Element::Set(Flag flag, bool value) {
-		flags = (flags & ~flag) | (value ? flag : 0);
-	}
-
 	void Element::AddPartsOrdered(std::vector<Element*>& ordered) {
 		ordered.push_back(this);
 	}
@@ -62,44 +55,43 @@ namespace ui {
 	void Element::Reshape(sf::Vector2f parentSizeOrigin, sf::Vector2f parentBoxScaled) {
 		Reshape({{0, 0}, parentSizeOrigin}, {{0, 0}, parentBoxScaled});
 	}
-
 	int Element::OnMouseEvent(MouseEvent event, sf::Vector2f pos) {
 		return NO_HIT;
 	}
 	void Element::Draw(Window* w) { }
-	Element::Element(Box2 zone, ScaleMode sm) :boxOrigin(zone), boxScaled(zone), sm(sm) { }
+	Element::Element(Box2 zone, ScaleMode sm) :boxOrigin(zone), boxScaled(zone), sm(sm) {
+		visible = false, clickable = false, fresh = false, pressed = false;
+	}
 
 	void Image::Draw(Window* w) {
-		if (Is(VISIBLE)) {
+		if (visible) {
 			spr.Draw(w, boxScaled);
 		}
 	}
 	Image::Image(Box2 zone, ScaleMode sm, const Sprite::Param& src) :Element(zone, sm), spr(src) {
-		Set(VISIBLE, true);
+		visible = true;
 	}
 
 	void Text::SetString(const std::string& s) {
 		spr.SetText(s);
 	}
 	void Text::Draw(Window* w) {
-		if (Is(VISIBLE)) {
+		if (visible) {
 			spr.Draw(w, boxScaled);
 		}
 	}
 	Text::Text(Box2 zone, ScaleMode sm, const std::string& textSrc, const std::string& fontSrc) :Element(zone, sm), spr(fontSrc, textSrc) {
-		Set(VISIBLE, true);
+		visible = true;
 	}
 
 	void Shader::Draw(Window* w) {
 		uniform_mtx.lock();
-//		printf("[2]\n");
-		if (Is(VISIBLE)) {
-//			printf("[3]\n");
+		if (visible) {
 			spr.Draw(w, boxScaled);
 		}
 		uniform_mtx.unlock();
 	}
 	Shader::Shader(Box2 zone, ScaleMode sm, const std::string& src) :Element(zone, sm), spr(src) {
-		Set(VISIBLE, true);
+		visible = true;
 	}
 }

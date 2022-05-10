@@ -4,7 +4,7 @@ namespace ui {
 	void Window::Refresh(bool check) {
 		if (!check) goto NOT_FRESH;
 		for (auto* e : ordered) {
-			if (!e->Is(Element::FRESH) && e->Is(Element::VISIBLE)) {
+			if (!e->fresh && e->visible) {
 				goto NOT_FRESH;
 			}
 		}
@@ -13,10 +13,10 @@ namespace ui {
 	NOT_FRESH:
 		//printf("[1]\n");
 		for (auto* e : ordered) {
-			e->Set(Element::FRESH, true);
+			e->fresh = true;
 		}
 		for (auto* s : scenes) {
-			if (s->Is(Element::VISIBLE))s->Reshape(sizeOrigin, sizeScaled);
+			if (s->visible)s->Reshape(sizeOrigin, sizeScaled);
 		}
 		scenes[currentScene]->Reshape(sizeOrigin, sizeScaled);
 		rw.clear();
@@ -26,14 +26,14 @@ namespace ui {
 	void Window::SetScene(Element* uiel, uint32_t id) {
 		scenes[id] = uiel;
 	}
-	void Window::SetManager(AppManager& manager) {
-		this->manager = &manager;
+	void Window::SetManager(AppManager& _manager) {
+		this->manager = &_manager;
 	}
 	void Window::SwitchScene(uint32_t sceneId) {
-		scenes[currentScene]->Set(Element::VISIBLE, false);
-		scenes[currentScene]->Set(Element::CLICKABLE, false);
-		scenes[sceneId]->Set(Element::VISIBLE, true);
-		scenes[sceneId]->Set(Element::CLICKABLE, true);
+		scenes[currentScene]->visible = false;
+		scenes[currentScene]->clickable = false;
+		scenes[sceneId]->visible = true;
+		scenes[sceneId]->clickable = true;
 		currentScene = sceneId;
 		Refresh(false);
 	}
@@ -53,8 +53,7 @@ namespace ui {
 		rw.create(sf::VideoMode((uint)sizeScaled.x, (uint)sizeScaled.y), name, sf::Style::Default, settings);
 		for (int i = 0; i < scenes.size(); i++) {
 			assert(scenes[i]);
-			scenes[i]->Set(Element::VISIBLE, !i);
-			scenes[i]->Set(Element::CLICKABLE, !i);
+			scenes[i]->visible = scenes[i]->clickable = !i;
 			scenes[i]->AddPartsOrdered(ordered);
 		}
 		assert(manager);
@@ -113,7 +112,6 @@ namespace ui {
 			if (pressed && state != BLOCKED) {
 				scenes[currentScene]->OnMouseEvent(MouseEvent::holding, mousePos);
 			}
-
 //			printf("%f %f\n", mousePos.x, mousePos.y);
 			Refresh(true);
 		}
@@ -128,9 +126,6 @@ namespace ui {
 		sizeScaled = sizeOrigin = size;
 		this->name = name;
 		state = PREPARE;
-	}
-	void Window::Wait() {
-		//renderThread.join();
 	}
 	Window::~Window() {
 		renderThread.join();

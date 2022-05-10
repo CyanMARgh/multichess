@@ -47,7 +47,6 @@ namespace ui {
 		void SwitchScene(uint32_t sceneId);
 
 		Window(const std::string& name, sf::Vector2f size, uint32_t sceneCount);
-		void Wait();
 		~Window();
 
 		friend class Sprite;

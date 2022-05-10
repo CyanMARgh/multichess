@@ -112,16 +112,10 @@ namespace ui {
 
 		Element(Box2 zone, ScaleMode sm);
 	public:
-		uint32_t flags = 0b00000000'00000000'00000000'00000000;
-
-		enum Flag : uint32_t {
-			VISIBLE = 1 << 0,
-			CLICKABLE = 1 << 1,
-			PRESSED = 1 << 2,
-			FRESH = 1 << 3
-		};
-		bool Is(Flag flag) const;
-		void Set(Flag flag, bool value);
+		bool visible : 1;
+		bool clickable : 1;
+		bool pressed : 1;
+		bool fresh : 1;
 
 		sf::Vector2f ToUnit(sf::Vector2f pos) const;
 
@@ -177,7 +171,7 @@ namespace ui {
 		template<typename T>
 		void SetUniform(const std::string& name, T arg) {
 			uniform_mtx.lock();
-			Set(FRESH, false);
+			fresh = false;
 			spr.SetUniform(name, arg);
 			uniform_mtx.unlock();
 		}
