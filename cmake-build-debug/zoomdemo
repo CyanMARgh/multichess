@@ -1,0 +1,7 @@
+group g0 : 0 0 1500 900 scaleXY
+    shader sh0 : 0 0 900 900 fitCenter "zoom.glsl"
+@
+@
+
+
+
