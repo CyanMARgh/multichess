@@ -1,8 +1,7 @@
 #pragma once
 #include <utility>
 
-#include "../ui/Window.h"
-#include "../specials/specials.h"
+#include "../utils/utils.h"
 #include "../chess/chess.h"
 #include "../ui/formparser.h"
 #include "../pinboard/pinboard.h"
@@ -30,18 +29,18 @@ namespace demo0 {
 			self->Unblock();
 		};
 		//SCENE_0
-		auto btn00 = new Button({0, 800, 500, 1000}, ScaleMode::scaleXY, {"src2.png"}, {"src3.png"}, 0);
+		auto btn00 = new Button({0, 800, 500, 1000}, ScaleMode::scaleXY, {"resources/src2.png"}, {"resources/src3.png"}, 0);
 		//
 		auto scene0 = new Group({0, 0, 1000, 1000}, ScaleMode::fullZone);
-		scene0->AddUIPart(new Image({500, 200, 1000, 1000}, ScaleMode::scaleXY, {"src1.png"}));
-		scene0->AddUIPart(new Image({0, 0, 500, 800}, ScaleMode::scaleXY, {"src0.png"}));
+		scene0->AddUIPart(new Image({500, 200, 1000, 1000}, ScaleMode::scaleXY, {"resources/src1.png"}));
+		scene0->AddUIPart(new Image({0, 0, 500, 800}, ScaleMode::scaleXY, {"resources/src0.png"}));
 		scene0->AddUIPart(btn00);
 		//SCENE_1
-		auto btn10 = new Button({500, 0, 1000, 200}, ScaleMode::scaleXY, {"src2.png"}, {"src3.png"}, 0);
+		auto btn10 = new Button({500, 0, 1000, 200}, ScaleMode::scaleXY, {"resources/src2.png"}, {"resources/src3.png"}, 0);
 		//
 		auto scene1 = new Group({0, 0, 1000, 1000}, ScaleMode::fullZone);
-		scene1->AddUIPart(new Image({500, 200, 1000, 1000}, ScaleMode::scaleXY, {"src0.png"}));
-		scene1->AddUIPart(new Image({0, 0, 500, 800}, ScaleMode::scaleXY, {"src1.png"}));
+		scene1->AddUIPart(new Image({500, 200, 1000, 1000}, ScaleMode::scaleXY, {"resources/src0.png"}));
+		scene1->AddUIPart(new Image({0, 0, 500, 800}, ScaleMode::scaleXY, {"resources/src1.png"}));
 		scene1->AddUIPart(btn10);
 		//FINAL
 		mainWin.SetScene(scene0, SCENE_0);
@@ -92,19 +91,19 @@ namespace demo1 {
 		auto scene0 = new Group({0, 0, 1000, 800}, ScaleMode::bindTL);
 		auto grid = new Group({0, 100, 700, 800}, ScaleMode::bindTL);
 		scene0->AddUIPart(grid);
-		auto grid_tm = new TileMap(Box2::Unit(), ScaleMode::fullZone, "chesstilemap.png", {16, 16});
+		auto grid_tm = new TileMap(Box2::Unit(), ScaleMode::fullZone, "resources/chesstilemap.png", {16, 16});
 		grid->AddUIPart(grid_tm);
 		auto grid_btn = new InvisibleButton(Box2::Unit(), ScaleMode::fullZone, 0);
 		grid->AddUIPart(grid_btn);
-		auto evalText = new Text({0, 0, 700, 100}, ScaleMode::bindTL, "Eval:.....", "Ninja Naruto.ttf");
+		auto evalText = new Text({0, 0, 700, 100}, ScaleMode::bindTL, "Eval:.....", "resources/font2.ttf");
 		scene0->AddUIPart(evalText);
-		auto evalBtn = new Button({800, 0, 1000, 100}, ScaleMode::bindTL, {"src0.png"}, {"src1.png"}, 1);
+		auto evalBtn = new Button({800, 0, 1000, 100}, ScaleMode::bindTL, {"resources/src0.png"}, {"resources/src1.png"}, 1);
 		scene0->AddUIPart(evalBtn);
 		auto varGrid = new Group({800, 100, 1000, 800}, ScaleMode::bindTL);
 		scene0->AddUIPart(varGrid);
-		auto varGrid_tm = new TileMap(Box2::Unit(), ScaleMode::fullZone, "chesstilemap.png", {16, 16});
+		auto varGrid_tm = new TileMap(Box2::Unit(), ScaleMode::fullZone, "resources/chesstilemap.png", {16, 16});
 		varGrid->AddUIPart(varGrid_tm);
-		auto varGrid_sel = new SelectionTM(varGrid_tm, {"src4.png"});
+		auto varGrid_sel = new SelectionTM(varGrid_tm, {"resources/src4.png"});
 		varGrid->AddUIPart(varGrid_sel);
 		auto varGrid_btn = new InvisibleButton(Box2::Unit(), ScaleMode::fullZone, 2);
 		varGrid->AddUIPart(varGrid_btn);
@@ -153,7 +152,7 @@ namespace demo1 {
 namespace demo2 {
 	void Demo() {
 		ui::Window mainWin("( ._. )/", {1000, 800}, 1);
-		auto shader = new ui::Shader({100, 100, 200, 500}, ui::ScaleMode::scaleXY, "shader0.frag");
+		auto shader = new ui::Shader({100, 100, 200, 500}, ui::ScaleMode::scaleXY, "resources/shader0.frag");
 		mainWin.SetScene(shader, 0);
 
 		enum State {
@@ -215,7 +214,7 @@ namespace demo3 {
 		}
 
 		Parser parser;
-		parser.Parse("demo1", mainWin);
+		parser.Parse("resources/demo1", mainWin);
 
 		auto grid_tm = (TileMap*)parser["scene0_grid_tm"];
 		auto varGrid_tm = (TileMap*)parser["scene0_varGrid_tm"];
@@ -265,7 +264,7 @@ namespace demo4 {
 		using namespace ui;
 		Window mainWin("<|* _ *|>", {1000, 800}, 1);
 
-		auto* img = new ui::Image({0, 0, 1000, 800}, ScaleMode::fullZone, {"chesstilemap.png", {16, 16}, 32, Sprite::Param::SCALE9, {100, 100}});
+		auto* img = new ui::Image({0, 0, 1000, 800}, ScaleMode::fullZone, {"resources/chesstilemap.png", {16, 16}, 32, Sprite::Param::SCALE9, {100, 100}});
 
 		mainWin.SetScene(img, 0);
 
@@ -293,7 +292,7 @@ namespace demo5 {
 		Window mainWin("<|* _ *|>", {1500, 900}, 1);
 
 		Parser parser;
-		parser.Parse("botdemo", mainWin);
+		parser.Parse("resources/botdemo", mainWin);
 
 		auto board = (ui::TileMap*)parser["scene0_board_tm"];
 		auto var = (ui::Variant*)parser["scene0_v1"];
@@ -354,7 +353,7 @@ namespace demo6 {
 		Window mainWin("zoom demo", {1500, 900}, 1);
 
 		Parser parser;
-		parser.Parse("zoomdemo", mainWin);
+		parser.Parse("resources/zoomdemo", mainWin);
 
 		auto shader = (ui::Shader*)parser["g0_sh0"];
 
@@ -368,7 +367,7 @@ namespace demo6 {
 			state = END;
 			self->Close();
 		};
-		shader->SetUniform("u_src", "src0.png");
+		shader->SetUniform("u_src", "resources/src0.png");
 		mainWin.SetManager(manager);
 		mainWin.StartRenderCycle();
 
@@ -376,36 +375,8 @@ namespace demo6 {
 		while(state != END) {
 			std::this_thread::sleep_for(std::chrono::milliseconds(10));
 			auto pos = mainWin.GetMousePos();
-//			printf("%f %f\n", pos.x, pos.y);
 			shader->SetUniform("u_mouse", pos);
 			shader->SetUniform("u_time", clock.getElapsedTime().asSeconds());
 		}
-
-			//printf("%d\n", tex->getSize().x);
-			//std::this_thread::sleep_for(std::chrono::seconds(1));
-//			shader->Set(Element::FRESH, false);
-//
-//		shader->SetUniform("u_W", .5f);
-
-
-			//printf("-");
-//			shader->SetUniform("u_src", tex);
-		//	std::this_thread::sleep_for(std::chrono::seconds(1));
-		//		while (state != END) {
-//			switch (state) {
-//				case PLAYER: {
-//					break;
-//				}
-//				case BOT: {
-//					if (pinboard.GetState() == Pinboard::PLAYER) {
-//						board->SetIndexes(GetTexturesByPins(pinboard.GetData()));
-//						state = PLAYER;
-//						var->SwitchTo(0);
-//					}
-//					break;
-//				}
-//				default:break;
-//			}
-//		}
 	}
 }

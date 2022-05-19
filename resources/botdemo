@@ -1,10 +1,10 @@
 group scene0 : 0 0 1500 900 bindTL
     group board : 350 50 1150 850 bindTL
-        tilemap tm @ fullZone "chesstilemap.png" 16 16 0 -1 @
+        tilemap tm @ fullZone "resources/chesstilemap.png" 16 16 0 -1 @
         InvisibleButton btn @ fullZone 1
     @
 
-    button _0 :  75   650   275   850 bindTL "src0.png" @ "src1.png" @ 0
+    button _0 :  75   650   275   850 bindTL "resources/src0.png" @ "resources/src1.png" @ 0
     variant v1 : 75   400   275   600 bindTL
         image A @ fullZone "src0.png" @
         image B @ fullZone "src1.png" @

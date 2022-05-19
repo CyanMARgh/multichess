@@ -1,4 +1,5 @@
 #include "uielements.h"
+#include <cassert>
 
 namespace ui {
 	Box2 TileMap::SubBox(sf::Vector2i i) {

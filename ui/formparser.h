@@ -13,10 +13,10 @@ public:
 	static std::string ParseString(std::ifstream& fin);
 	static Box2 ParseBox(std::ifstream& fin);
 	static ui::Sprite::Param ParseSpriteParam(std::ifstream& fin);
-	static void ToLover (std::string& s);
+	static void ToLower (std::string& s);
 
 	static std::string FullName(std::vector<std::string>& groupStack, const std::string& name);
-	std::vector<ui::Element*> ParseElement(std::vector<std::string>& groupStack, std::ifstream& fin);
+	std::array<ui::Element*, 2> ParseElement(std::vector<std::string>& groupStack, std::ifstream& fin);
 	void Parse(const std::string& path, ui::Window& w, uint32_t scene0 = 0);
 
 	ui::Element* operator[](const std::string&);

@@ -2,7 +2,9 @@
 
 ui::Element* Parser::operator[](const std::string& name) {
 	auto found = elements.find(name);
-	assert(found != elements.end());
+	if (found == elements.end()) {
+		throw std::runtime_error("no Element with name \"" + name + "\"");
+	}
 	return found->second;
 }
 std::string Parser::FullName(std::vector<std::string>& groupStack, const std::string& name) {
@@ -15,19 +17,19 @@ std::string Parser::FullName(std::vector<std::string>& groupStack, const std::st
 }
 std::string Parser::ParseString(std::ifstream& fin) {
 	std::stringstream ss;
-	char buf;
+	int buf;
 	do {
 		buf = fin.get();
 	} while (std::isspace(buf));
-	if (buf != '"') assert(false);
+	if (buf != '"') throw std::runtime_error("expected string literal");
 	do {
 		buf = fin.get();
 		if (buf == '"')break;
-		ss << buf;
+		ss << (char)buf;
 	} while (true);
 	return ss.str();
 }
-void Parser::ToLover(std::string& s) {
+void Parser::ToLower(std::string& s) {
 	for (auto& c : s) {
 		if (c >= 'A' && c <= 'Z') {
 			c += ('a' - 'A');
@@ -43,7 +45,7 @@ Box2 Parser::ParseBox(std::ifstream& fin) {
 	} else if (buf == ":") {
 		fin >> box.bottomLeft.x >> box.bottomLeft.y >> box.topRight.x >> box.topRight.y;
 	} else {
-		assert(false);
+		throw std::runtime_error("can't parse Box2.");
 	}
 	return box;
 }
@@ -58,13 +60,13 @@ ui::Sprite::Param Parser::ParseSpriteParam(std::ifstream& fin) {
 		t = ui::Sprite::Param::Type::SINGLE;
 	} else if (buf == ":") {
 		fin >> sx >> sy >> i >> buf;
-		ToLover(buf);
+		ToLower(buf);
 		t = ui::Sprite::Param::GetType(buf);
 		if (t == ui::Sprite::Param::Type::SCALE9) {
 			fin >> size0.x >> size0.y;
 		}
 	} else {
-		assert(false);
+		throw std::runtime_error("can't parse string parameter");
 	}
 	return {s, {sx, sy}, i, t, size0};
 }
@@ -80,33 +82,30 @@ ui::ScaleMode Parser::ParseScaleMode(std::ifstream& fin) {
 		   s == "fitCenter" ? ScaleMode::fitCenter :
 		   ScaleMode::fullZone;
 }
-std::vector<ui::Element*> Parser::ParseElement(std::vector<std::string>& groupStack, std::ifstream& fin) {
+std::array<ui::Element*, 2> Parser::ParseElement(std::vector<std::string>& groupStack, std::ifstream& fin) {
+	std::array<ui::Element*, 2> ans = {nullptr, nullptr};
 	std::string type, name;
 	Box2 zone;
 	fin >> type;
-	ToLover(type);
+	ToLower(type);
 	if (type == "@") return {};
 	fin >> name;
 	zone = ParseBox(fin);
 	ui::ScaleMode sm = ParseScaleMode(fin);
 	std::string fullname = FullName(groupStack, name);
-	std::vector < ui::Element * > ans = {nullptr};
 	if (type == "group" || type == "variant") {
 		if (type == "group") {
 			ans[0] = new ui::Group(zone, sm);
 		} else {
 			ans[0] = new ui::Variant(zone, sm);
 		}
-
 		groupStack.push_back(name);
 		do {
 			auto subEls = ParseElement(groupStack, fin);
-			if (!subEls.empty()) {
-				for (auto el : subEls) {
-					((ui::Group*)ans[0])->AddUIPart(el);
-				}
-			} else {
-				break;
+			if (!subEls[0])break;
+			for (auto el : subEls) {
+				if(!el)break;
+				((ui::Group*)ans[0])->AddUIPart(el);
 			}
 		} while (true);
 		groupStack.pop_back();
@@ -140,12 +139,12 @@ std::vector<ui::Element*> Parser::ParseElement(std::vector<std::string>& groupSt
 		if (sub == "sel") {
 			auto sel = new ui::SelectionTM((ui::TileMap*)ans[0], ParseSpriteParam(fin));
 			elements.insert({fullname + "_sel", sel});
-			ans.push_back(sel);
+			ans[1] = sel;
 		} else if (sub != "@") {
-			assert(false);
+			throw std::runtime_error("invalid parameter of tilemap: \"" + sub + "\"");
 		}
 	} else {
-		assert(false);
+		throw std::runtime_error("unknown Element type: \"" + name + "\"");
 	}
 	elements.insert({fullname, ans[0]});
 	if (groupStack.empty()) {
@@ -158,7 +157,7 @@ std::vector<ui::Element*> Parser::ParseElement(std::vector<std::string>& groupSt
 void Parser::Parse(const std::string& path, ui::Window& w, uint32_t scene0) {
 	std::ifstream fin(path);
 	std::vector<std::string> groupStack = {};
-	while (!ParseElement(groupStack, fin).empty());
+	while (ParseElement(groupStack, fin)[0]);
 	for (uint i = 0, n = scenes.size(); i < n; i++) {
 		w.SetScene(scenes[scene0 + i], i);
 	}
