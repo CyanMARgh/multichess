@@ -1,0 +1,26 @@
+group s0 : 0 0 1000 900 fitCenter
+    group board : 0 0 900 900 scaleXY
+        tilemap back @ fullZone "resources/chesstilemap.png" 16 16 0 -1 @
+        tilemap front @ fullZone "resources/chesstilemap.png" 16 16 0 -1
+            sel "resources/src4.png" @
+        invisiblebutton btn @ fillZone 0
+    @
+    group rst : 900 800 1000 900 scaleXY
+        button b @ fullZone
+            "resources/chesstilemap.png" : 16 16 32 SCALE9 100 100
+            "resources/chesstilemap.png" : 16 16 32 SCALE9 100 100
+            1
+        text t : 900 820 1000 910 scaleXY "R" "resources/pixelTimes.ttf" #FF5555FF
+    @
+@
+@
+
+
+
+
+
+0 - board
+1 - restart
+
+
+1200 * 900

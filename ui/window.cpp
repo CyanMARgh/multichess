@@ -51,8 +51,8 @@ namespace ui {
 		settings.antialiasingLevel = 10;
 
 		rw.create(sf::VideoMode((uint)sizeScaled.x, (uint)sizeScaled.y), name, sf::Style::Default, settings);
-		for (int i = 0; i < scenes.size(); i++) {
-			assert(scenes[i]);
+		for (uint i = 0; i < scenes.size(); i++) {
+			if (!scenes[i]) throw std::runtime_error("scene #" + std::to_string(i) + " not set");
 			scenes[i]->visible = scenes[i]->clickable = !i;
 			scenes[i]->AddPartsOrdered(ordered);
 		}

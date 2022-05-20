@@ -29,8 +29,8 @@ namespace ui {
 		if (visible) {
 			sf::Vector2i i;
 			int j = 0;
-			for (i.y = 0; i.y < gridSize.y; i.y++) {
-				for (i.x = 0; i.x < gridSize.x; i.x++, j++) {
+			for (i.y = 0; i.y < (int)gridSize.y; i.y++) {
+				for (i.x = 0; i.x < (int)gridSize.x; i.x++, j++) {
 					tilemap[map[j]].Draw(w, SubBox(i));
 				}
 			}
@@ -40,7 +40,7 @@ namespace ui {
 		visible = true;
 		map = {};
 		gridSize = {};
-		if (end == -1) end = srcGridSize.x * srcGridSize.y;
+		if (end == (uint32_t)-1) end = srcGridSize.x * srcGridSize.y;
 		tilemap.assign(end - beg, {});
 		for (uint32_t i = 0, j = beg; j < end; i++, j++) {
 			tilemap[i] = Sprite({src, srcGridSize, j});

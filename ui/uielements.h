@@ -59,7 +59,7 @@ namespace ui {
 	public:
 		TextSprite(const std::string& fontSrc, const std::string& textSrc);
 		void SetText(const std::string& textSrc);
-		void Draw(Window* w, Box2 zone);
+		void Draw(Window* w, Box2 zone, uint32_t color);
 	};
 	class ShaderSprite {
 		sf::RectangleShape rs;
@@ -161,8 +161,9 @@ namespace ui {
 	protected:
 		TextSprite spr;
 		void Draw(Window* w) override;
+		uint32_t color;
 	public:
-		Text(Box2 zone, ScaleMode sm, const std::string& textSrc, const std::string& fontSrc);
+		Text(Box2 zone, ScaleMode sm, const std::string& textSrc, const std::string& fontSrc, uint32_t color = ~0);
 		void SetString(const std::string& s);
 	};
 	class Shader final : public Element {

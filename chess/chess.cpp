@@ -51,18 +51,18 @@ Board::Board(type t) {
 		}
 		case DEFAULT: {
 			map = {
-					BLACK & ROOK, BLACK & KNIGHT, BLACK & BISHOP, BLACK & QUEEN,
-					BLACK & KING, BLACK & BISHOP, BLACK & KNIGHT, BLACK & ROOK,
-					BLACK & PAWN, BLACK & PAWN, BLACK & PAWN, BLACK & PAWN,
-					BLACK & PAWN, BLACK & PAWN, BLACK & PAWN, BLACK & PAWN,
+					BLACK | ROOK, BLACK | KNIGHT, BLACK | BISHOP, BLACK | QUEEN,
+					BLACK | KING, BLACK | BISHOP, BLACK | KNIGHT, BLACK | ROOK,
+					BLACK | PAWN, BLACK | PAWN, BLACK | PAWN, BLACK | PAWN,
+					BLACK | PAWN, BLACK | PAWN, BLACK | PAWN, BLACK | PAWN,
 					NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE,
 					NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE,
 					NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE,
 					NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE,
-					WHITE & PAWN, WHITE & PAWN, WHITE & PAWN, WHITE & PAWN,
-					WHITE & PAWN, WHITE & PAWN, WHITE & PAWN, WHITE & PAWN,
-					WHITE & ROOK, WHITE & KNIGHT, WHITE & BISHOP, WHITE & QUEEN,
-					WHITE & KING, WHITE & BISHOP, WHITE & KNIGHT, WHITE & ROOK
+					WHITE | PAWN, WHITE | PAWN, WHITE | PAWN, WHITE | PAWN,
+					WHITE | PAWN, WHITE | PAWN, WHITE | PAWN, WHITE | PAWN,
+					WHITE | ROOK, WHITE | KNIGHT, WHITE | BISHOP, WHITE | QUEEN,
+					WHITE | KING, WHITE | BISHOP, WHITE | KNIGHT, WHITE | ROOK
 			};
 			break;
 		}
@@ -70,6 +70,9 @@ Board::Board(type t) {
 	flags = 0, timer = 50, story = {}, state = WHITE_TURN;
 }
 Figure& Board::At(uint8_t x, uint8_t y) {
+	return map[x+y*8];
+}
+Figure Board::At(uint8_t x, uint8_t y) const {
 	return map[x+y*8];
 }
 int Board::call(int code) {

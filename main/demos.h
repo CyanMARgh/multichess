@@ -26,7 +26,6 @@ namespace demo0 {
 				}
 				default: assert(false);
 			}
-			self->Unblock();
 		};
 		//SCENE_0
 		auto btn00 = new Button({0, 800, 500, 1000}, ScaleMode::scaleXY, {"resources/src2.png"}, {"resources/src3.png"}, 0);
@@ -45,7 +44,6 @@ namespace demo0 {
 		//FINAL
 		mainWin.SetScene(scene0, SCENE_0);
 		mainWin.SetScene(scene1, SCENE_1);
-		mainWin.SetManager(manager);
 
 		mainWin.StartRenderCycle();
 	}
@@ -84,7 +82,7 @@ namespace demo1 {
 		};
 		std::vector<uint32_t> varListU32(varGridMetrics.x * varGridMetrics.y);
 
-		for (int i = 0; i < varGridMetrics.x * varGridMetrics.y; i++) {
+		for (uint32_t i = 0; i < varGridMetrics.x * varGridMetrics.y; i++) {
 			varListU32[i] = sprIdByFigure(varList[i]);
 		}
 
@@ -141,11 +139,9 @@ namespace demo1 {
 				}
 				default: assert(false);
 			}
-			self->Unblock();
 		};
 
 		//FINAL
-		mainWin.SetManager(manager);
 		mainWin.StartRenderCycle();
 	}
 }
@@ -166,7 +162,6 @@ namespace demo2 {
 			state = STOP;
 		};
 
-		mainWin.SetManager(manager);
 		mainWin.StartRenderCycle();
 
 		sf::Clock clock;
@@ -209,7 +204,7 @@ namespace demo3 {
 		};
 		std::vector<uint32_t> varListU32(varGridMetrics.x * varGridMetrics.y);
 
-		for (int i = 0; i < varGridMetrics.x * varGridMetrics.y; i++) {
+		for (uint32_t i = 0; i < varGridMetrics.x * varGridMetrics.y; i++) {
 			varListU32[i] = sprIdByFigure(varList[i]);
 		}
 
@@ -249,13 +244,11 @@ namespace demo3 {
 				}
 				default: assert(false);
 			}
-			self->Unblock();
 		};
 
 		grid_tm->SetIndexes(std::vector<uint32_t>(gridMetrics.x * gridMetrics.y, sprIdByFigure(figures::NONE)), gridMetrics);;
 		varGrid_tm->SetIndexes(varListU32, varGridMetrics);
 
-		mainWin.SetManager(manager);
 		mainWin.StartRenderCycle();
 	}
 }
@@ -269,8 +262,6 @@ namespace demo4 {
 		mainWin.SetScene(img, 0);
 
 		AppManager manager(mainWin);
-
-		mainWin.SetManager(manager);
 		mainWin.StartRenderCycle();
 	}
 }
@@ -318,7 +309,6 @@ namespace demo5 {
 					var->SwitchTo(1);
 				}
 			}
-			self->Unblock();
 		};
 		manager.oe = [&](AppManager* self) {
 			pinboard.SetState(Pinboard::END);
@@ -326,7 +316,6 @@ namespace demo5 {
 			self->Close();
 		};
 
-		mainWin.SetManager(manager);
 		mainWin.StartRenderCycle();
 
 		while (state != END) {
@@ -368,15 +357,85 @@ namespace demo6 {
 			self->Close();
 		};
 		shader->SetUniform("u_src", "resources/src0.png");
-		mainWin.SetManager(manager);
 		mainWin.StartRenderCycle();
 
 		sf::Clock clock;
-		while(state != END) {
+		while (state != END) {
 			std::this_thread::sleep_for(std::chrono::milliseconds(10));
 			auto pos = mainWin.GetMousePos();
 			shader->SetUniform("u_mouse", pos);
 			shader->SetUniform("u_time", clock.getElapsedTime().asSeconds());
 		}
+	}
+}
+namespace demo7 {
+	const uint32_t SIZE = 8;
+
+	std::vector<uint32_t> BackIds(uint32_t idW, uint32_t idB) {
+		std::vector<uint32_t> ans(SIZE * SIZE);
+		for (uint32_t y = 0, i = 0, x; y < SIZE; y++) {
+			for (x = 0; x < SIZE; x++, i++) {
+				ans[i] = (x + y) % 2 ? idW : idB;
+			}
+		}
+		return ans;
+	}
+	uint32_t ToTexId(Figure f) {
+		Figure ft = f & figures::MASKF;
+		Figure fc = f & figures::MASKC;
+		uint32_t rt = ft == figures::PAWN ? 0 :
+					  ft == figures::BISHOP ? 1 :
+					  ft == figures::KNIGHT ? 2 :
+					  ft == figures::ROOK ? 3 :
+					  ft == figures::QUEEN ? 4 :
+					  ft == figures::KING ? 5 : 15;
+		uint32_t rc = fc == figures::WHITE ? 0 : fc == figures::BLACK ? 1 : 15;
+		return rt + rc * 16;
+	}
+	std::vector<uint32_t> GetIds(const Board& board) {
+		std::vector<uint32_t> ans(SIZE * SIZE);
+		for (uint32_t y = 0, i = 0, x; y < SIZE; y++) {
+			for (x = 0; x < SIZE; x++, i++) {
+				ans[i] = ToTexId(board.At(x, SIZE - 1 - y));
+			}
+		}
+		return ans;
+	}
+	void Demo() {
+		using namespace ui;
+
+		Board board(Board::DEFAULT);
+
+		Window mainWin("chess?", {1200, 900}, 1);
+		Parser parser;
+		parser.Parse("resources/chessform", mainWin);
+
+		auto back = (TileMap*)parser["s0_board_back"];
+		auto front = (TileMap*)parser["s0_board_front"];
+		auto gridbtn = (InvisibleButton*)parser["s0_board_btn"];
+		auto sel = (SelectionTM*)parser["s0_board_front_sel"];
+		auto btn_rst = (Button*)parser["s0_rst_b"];
+
+		AppManager manager(mainWin);
+
+		manager.obc = [&](AppManager* self, uint32_t id, sf::Vector2f pos) {
+			switch (id) {
+				case 0: {
+					auto ipos = front->Proj(pos);
+					if (cm::Valid(ipos, sf::Vector2i(SIZE, SIZE))) {
+						sel->Click(ipos);
+					}
+					break;
+				}
+				case 1: {
+					break;
+				}
+				default : assert(false);
+			}
+		};
+		back->SetIndexes(BackIds(14, 15), {8, 8});
+		front->SetIndexes(GetIds(board), {8, 8});
+
+		mainWin.StartRenderCycle();
 	}
 }

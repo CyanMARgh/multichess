@@ -77,10 +77,11 @@ namespace ui {
 	}
 	void Text::Draw(Window* w) {
 		if (visible) {
-			spr.Draw(w, boxScaled);
+			spr.Draw(w, boxScaled, color);
 		}
 	}
-	Text::Text(Box2 zone, ScaleMode sm, const std::string& textSrc, const std::string& fontSrc) :Element(zone, sm), spr(fontSrc, textSrc) {
+	Text::Text(Box2 zone, ScaleMode sm, const std::string& textSrc, const std::string& fontSrc, uint32_t color) :Element(zone, sm), spr(fontSrc, textSrc) {
+		this->color = color;
 		visible = true;
 	}
 

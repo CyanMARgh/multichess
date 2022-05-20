@@ -49,6 +49,24 @@ Box2 Parser::ParseBox(std::ifstream& fin) {
 	}
 	return box;
 }
+uint32_t Parser::ParseHexColor(std::ifstream& fin) {
+	std::stringstream ss;
+	int buf;
+	do {
+		buf = fin.get();
+	} while (std::isspace(buf));
+	if (buf == '@')return ~0;
+	if (buf != '#')throw std::runtime_error("unexpected character (" + std::to_string((char)buf) + ") on color parse");
+	int ans = 0;
+	for (uint32_t i = 0; i < 8; i++) {
+		buf = fin.get();
+		buf = tolower(buf);
+		ans <<= 4;
+		ans |= ((buf <= '9' && buf >= '0') ? buf - '0' : buf - 'a' + 10);
+	}
+	return ans;
+}
+
 ui::Sprite::Param Parser::ParseSpriteParam(std::ifstream& fin) {
 	std::string s = ParseString(fin), buf;
 	fin >> buf;
@@ -66,7 +84,7 @@ ui::Sprite::Param Parser::ParseSpriteParam(std::ifstream& fin) {
 			fin >> size0.x >> size0.y;
 		}
 	} else {
-		throw std::runtime_error("can't parse string parameter");
+		throw std::runtime_error("can't parse sprite parameter");
 	}
 	return {s, {sx, sy}, i, t, size0};
 }
@@ -104,7 +122,7 @@ std::array<ui::Element*, 2> Parser::ParseElement(std::vector<std::string>& group
 			auto subEls = ParseElement(groupStack, fin);
 			if (!subEls[0])break;
 			for (auto el : subEls) {
-				if(!el)break;
+				if (!el)break;
 				((ui::Group*)ans[0])->AddUIPart(el);
 			}
 		} while (true);
@@ -124,7 +142,7 @@ std::array<ui::Element*, 2> Parser::ParseElement(std::vector<std::string>& group
 		fin >> btncode;
 		ans[0] = new ui::Button(zone, sm, srcf, srcp, btncode);
 	} else if (type == "text") {
-		ans[0] = new ui::Text(zone, sm, ParseString(fin), ParseString(fin));
+		ans[0] = new ui::Text(zone, sm, ParseString(fin), ParseString(fin), ParseHexColor(fin));
 	} else if (type == "invisiblebutton") {
 		uint32_t btncode;
 		fin >> btncode;

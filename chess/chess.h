@@ -65,6 +65,7 @@ public:
     };
     Board(type t);
     Figure& At(uint8_t x, uint8_t y);
+    Figure At(uint8_t x, uint8_t y) const;
     static uint8_t GetField(uint8_t rank, uint8_t file);
     static std::pair<uint8_t, uint8_t> setField(uint8_t field) ;
     void PlayStep(Step s); // применение хода

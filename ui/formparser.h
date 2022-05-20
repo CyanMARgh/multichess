@@ -12,6 +12,7 @@ public:
 	static ui::ScaleMode ParseScaleMode(std::ifstream& fin);
 	static std::string ParseString(std::ifstream& fin);
 	static Box2 ParseBox(std::ifstream& fin);
+	static uint32_t ParseHexColor(std::ifstream& fin);
 	static ui::Sprite::Param ParseSpriteParam(std::ifstream& fin);
 	static void ToLower (std::string& s);
 

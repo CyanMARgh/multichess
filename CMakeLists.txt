@@ -8,7 +8,7 @@ set(PROJECT_NAME multichess)
 cmake_minimum_required(VERSION 3.19)
 project(${PROJECT_NAME})
 set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -Wall")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -Wextra")
 
 find_package(SFML 2.5.1 COMPONENTS graphics audio REQUIRED)
 add_executable(${PROJECT_NAME} ${SOURCE})

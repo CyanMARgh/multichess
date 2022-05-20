@@ -12,6 +12,7 @@ namespace ui {
 	}
 	void AppManager::OnBtnClick(uint32_t btnId, sf::Vector2f pos) {
 		obc(this, btnId, pos);
+		Unblock();
 	}
 
 	void AppManager::SwitchScene(uint32_t sceneId) {
@@ -26,7 +27,9 @@ namespace ui {
 	void AppManager::Close() const {
 		w->state = Window::STOP;
 	}
-	AppManager::AppManager(Window& w) :w(&w), currentScene(0) { }
+	AppManager::AppManager(Window& w) :w(&w), currentScene(0) {
+		w.SetManager(*this);
+	}
 	AppManager::~AppManager() {
 		while (w->state != Window::STOP && w->state != Window::ERROR) {
 //			printf("-");

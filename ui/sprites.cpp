@@ -29,8 +29,8 @@ namespace ui {
 		sf::Vector2u s = img.getSize();
 		sf::Vector2u s0 = {s.x / gridMetrics.x, s.y / gridMetrics.y};
 
-		for (int y = 0, i = 0; y < gridMetrics.y; y++) {
-			for (int x = 0; x < gridMetrics.x; x++, i++) {
+		for (uint32_t y = 0, i = 0; y < gridMetrics.y; y++) {
+			for (uint32_t x = 0; x < gridMetrics.x; x++, i++) {
 				sf::IntRect rect((int)(s0.x * x), (int)(s0.y * y), (int)s0.x, (int)s0.y);
 				std::shared_ptr<Base> sb(new Base(img, prefix + std::to_string(i), rect));
 				loadedSprites.insert(std::move(sb));
@@ -99,7 +99,7 @@ namespace ui {
 	void TextSprite::SetText(const std::string& textSrc) {
 		stext = textSrc;
 	}
-	void TextSprite::Draw(Window* w, Box2 zone) {
+	void TextSprite::Draw(Window* w, Box2 zone, uint32_t color) {
 		auto sizeScaled = w->sizeScaled;
 		zone = {zone.bottomLeft.x, sizeScaled.y - zone.topRight.y, zone.topRight.x, sizeScaled.y - zone.bottomLeft.y};
 		text.setCharacterSize((uint)zone.Height());
@@ -112,6 +112,7 @@ namespace ui {
 		lb = text.getGlobalBounds();
 		sf::Vector2f c = ((Box2)lb).Rad();
 		text.setPosition(zone.Center() - c);
+		text.setFillColor(*(sf::Color*)&color);
 		w->rw.draw(text);
 	}
 
@@ -125,13 +126,13 @@ namespace ui {
 		SetUniform("u_bl", (sf::Glsl::Vec2)zone.bottomLeft);
 		SetUniform("u_tr", (sf::Glsl::Vec2)zone.topRight);
 
-		for(const auto& p : uniformsFloat) {
+		for (const auto& p : uniformsFloat) {
 			sh.setUniform(p.first, p.second);
 		}
-		for(const auto& p : uniformsVec2) {
+		for (const auto& p : uniformsVec2) {
 			sh.setUniform(p.first, p.second);
 		}
-		for(const auto& p : uniformsTex) {
+		for (const auto& p : uniformsTex) {
 			sh.setUniform(p.first, *p.second);
 		}
 
