@@ -127,7 +127,7 @@ namespace demo1 {
 					break;
 				}
 				case (SCENE_0 << 16) | 1: {
-					evalText->SetString("Eval: " + std::to_string(mainBoard.Eval()));
+					evalText->SetString("Eval: " + std::to_string(0));
 					break;
 				}
 				case (SCENE_0 << 16) | 2: {
@@ -232,7 +232,7 @@ namespace demo3 {
 					break;
 				}
 				case (0 << 16) | 1: {
-					evalText->SetString("Eval: " + std::to_string(mainBoard.Eval()));
+					evalText->SetString("Eval: " + std::to_string(0));
 					break;
 				}
 				case (0 << 16) | 2: {
@@ -396,7 +396,7 @@ namespace demo7 {
 		std::vector<uint32_t> ans(SIZE * SIZE);
 		for (uint32_t y = 0, i = 0, x; y < SIZE; y++) {
 			for (x = 0; x < SIZE; x++, i++) {
-				ans[i] = ToTexId(board.At(x, SIZE - 1 - y));
+				ans[i] = ToTexId(board.At(x, y));
 			}
 		}
 		return ans;
@@ -413,28 +413,41 @@ namespace demo7 {
 		auto back = (TileMap*)parser["s0_board_back"];
 		auto front = (TileMap*)parser["s0_board_front"];
 		auto gridbtn = (InvisibleButton*)parser["s0_board_btn"];
-		auto sel = (SelectionTM*)parser["s0_board_front_sel"];
+		auto front_sel = (SelectionTM*)parser["s0_board_front_sel"];
 		auto btn_rst = (Button*)parser["s0_rst_b"];
 
 		AppManager manager(mainWin);
+		back->SetIndexes(BackIds(14, 15), {8, 8});
+		front->SetIndexes(GetIds(board), {8, 8});
 
+		sf::Vector2i selpos = {-1, -1};
 		manager.obc = [&](AppManager* self, uint32_t id, sf::Vector2f pos) {
 			switch (id) {
 				case 0: {
 					auto ipos = front->Proj(pos);
-					if (cm::Valid(ipos, sf::Vector2i(SIZE, SIZE))) {
-						sel->Click(ipos);
+					if (!cm::Valid(ipos, sf::Vector2i(SIZE, SIZE))) break;
+					if (ipos == selpos) {
+						selpos = {-1, -1};
+					} else if (cm::Valid(selpos, sf::Vector2i(SIZE, SIZE))) {
+						if (board.PlayerStep(selpos, ipos)) {
+							front->SetIndexes(GetIds(board), {8, 8});
+							selpos = {-1, -1};
+						} else {
+						}
+					} else {
+						selpos = ipos;
 					}
+					front_sel->Select(selpos);
 					break;
 				}
 				case 1: {
+					board.Reset();
+					front->SetIndexes(GetIds(board), {8, 8});
 					break;
 				}
 				default : assert(false);
 			}
 		};
-		back->SetIndexes(BackIds(14, 15), {8, 8});
-		front->SetIndexes(GetIds(board), {8, 8});
 
 		mainWin.StartRenderCycle();
 	}
