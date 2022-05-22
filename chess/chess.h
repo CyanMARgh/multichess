@@ -41,7 +41,7 @@ class Board {
     std::vector<Figure> map; //массив фигур
     // std::set<sf::Vector2f> множество координат фигур, может быть полезно, когда их мало, но по ним надо итерировать.
     bool black_king = true; // способность рокироваться
-    bool white_king = true;
+    bool white_king = true;// !!! НАДО ПЕРЕНЕСТИ ВО ФЛАГИ
     uint16_t timer = 50; // обратный отсчёт до ничьи при отсутствии значимых ходов
     std::list<Step> story; //история ходов
     enum State {
@@ -57,6 +57,7 @@ public:
         DEFAULT
     };
     Board(type t);
+    // НУЖНО ДВА МЕТОДА, const - ДЛЯ ТОГО, ЧТОБЫ Я МОГ ОБРАЩАТЬСЯ К КЛЕТКАМ ДЛЯ ОТРИСОВКИ.
     Figure& At(uint8_t x, uint8_t y);
     Figure At(uint8_t x, uint8_t y) const;
     Figure GetState();
@@ -66,8 +67,15 @@ public:
     std::vector<sf::Vector2i> PossibleCastlings(const uint8_t& x, const uint8_t& y); // рокировки
     std::vector<sf::Vector2i> PossibleTOA(const uint8_t& x, const uint8_t& y); // взятия на проходе
     std::set<std::pair<int, int>> GetAttackedFields(); // какие поля сейчас атакует соперник
+    // КАКОЙ std::pair<int, int>? ИСПОЛЬЗУЙ sf::Vector2u или sf::Vector2i
     void PlayStep(Step s); // применение хода
     void UndoStep(); // отмена последнего хода
     bool PlayerStep(sf::Vector2i from, sf::Vector2i to);
     void Reset();
+
+    //МЕТОД, КОТОРЫЙ ОБРАБАТЫВАЕТ НАЖАТИЕ ИГРОКА НА КЛЕТКУ, ВОЗВРАЩАЕТ ОТВЕТ, СОДЕРЖАЩИЙ ИНФОРМАЦИЮ О РЕЗУЛЬТАТЕ НАЖАТИЯ: СОВЕРШЁН ЛИ ХОД, ОСТАЛОСЬ ИЛИ ПРОПАЛО ВЫДЕЛЕНИЕ,
+    //ОЖИДАЕТСЯ ЛИ ОТ ИГРОКА ТЕПЕРЬ ВЫБОР ПОВЫШЕНИЯ ПЕШКИ
+    //int Click(sf::Vector2u pos);
+    //СООБЩЕНИЕ ДОСКЕ О ДЕЙСТВИИ, КОТОРОЕ НЕ ЯВЛЯЕТСЯ НАЖАТИЕМ НА КНОПКУ
+    //int Call(int code);
 };

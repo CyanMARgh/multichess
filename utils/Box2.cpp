@@ -7,8 +7,8 @@ sf::Vector2f operator/(const sf::Vector2f& lhs, const sf::Vector2f& rhs) {
 	return {lhs.x / rhs.x, lhs.y / rhs.y};
 }
 
-Box2::Box2(sf::Vector2f bottomLeft, sf::Vector2f topRight) :bottomLeft(bottomLeft), topRight(topRight) { }
-Box2::Box2(float l, float b, float r, float t) :bottomLeft(sf::Vector2f(l, b)), topRight(sf::Vector2f(r, t)) { }
+Box2::Box2(sf::Vector2f bottomLeft, sf::Vector2f topRight) :topRight(topRight), bottomLeft(bottomLeft) { }
+Box2::Box2(float l, float b, float r, float t) :topRight(sf::Vector2f(r, t)), bottomLeft(sf::Vector2f(l, b)) { }
 Box2::Box2(sf::FloatRect rect) {
 	bottomLeft = {rect.left, rect.top - rect.height};
 	topRight = {rect.left + rect.width, rect.top};

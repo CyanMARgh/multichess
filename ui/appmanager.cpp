@@ -27,7 +27,7 @@ namespace ui {
 	void AppManager::Close() const {
 		w->state = Window::STOP;
 	}
-	AppManager::AppManager(Window& w) :w(&w), currentScene(0) {
+	AppManager::AppManager(Window& w) : currentScene(0), w(&w) {
 		w.SetManager(*this);
 	}
 	AppManager::~AppManager() {

@@ -13,7 +13,7 @@ namespace demo0 {
 
 		const int SCENE_0 = 0, SCENE_1 = 1;
 		AppManager manager(mainWin);
-		manager.obc = [&](AppManager* self, uint32_t id, sf::Vector2f pos) {
+		manager.obc = [&](AppManager* self, uint32_t id, sf::Vector2f) {
 			uint32_t snid = (self->currentScene << 16) | id;
 			switch (snid) {
 				case (SCENE_0 << 16) | 0: {
@@ -412,16 +412,16 @@ namespace demo7 {
 
 		auto back = (TileMap*)parser["s0_board_back"];
 		auto front = (TileMap*)parser["s0_board_front"];
-		auto gridbtn = (InvisibleButton*)parser["s0_board_btn"];
+		//auto gridbtn = (InvisibleButton*)parser["s0_board_btn"];
 		auto front_sel = (SelectionTM*)parser["s0_board_front_sel"];
-		auto btn_rst = (Button*)parser["s0_rst_b"];
+		//auto btn_rst = (Button*)parser["s0_rst_b"];
 
 		AppManager manager(mainWin);
 		back->SetIndexes(BackIds(14, 15), {8, 8});
 		front->SetIndexes(GetIds(board), {8, 8});
 
 		sf::Vector2i selpos = {-1, -1};
-		manager.obc = [&](AppManager* self, uint32_t id, sf::Vector2f pos) {
+		manager.obc = [&](AppManager*, uint32_t id, sf::Vector2f pos) {
 			switch (id) {
 				case 0: {
 					auto ipos = front->Proj(pos);

@@ -1,7 +1,7 @@
 #include "uielements.h"
 
 namespace ui {
-	Box2 Group::GetSubBox(uint i) {
+	Box2 Group::GetSubBox(uint) {
 		return boxScaled;
 	}
 	void Group::AddUIPart(Element* uiel) {
@@ -115,7 +115,7 @@ namespace ui {
 		this->metrics = metrics;
 	}
 
-	Box2 Variant::GetSubBox(uint i) {
+	Box2 Variant::GetSubBox(uint) {
 		return boxScaled;
 	}
 	Variant::Variant(Box2 zone, ScaleMode sm) :Group(zone, sm) {

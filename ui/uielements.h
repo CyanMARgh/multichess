@@ -300,7 +300,7 @@ namespace ui {
 	protected:
 	public:
 		uint32_t currentScene = 0;
-		Window* w;
+		Window* w = nullptr;
 
 		void OnKeyEvent(uint32_t keyCode);
 		void OnSceneSwitch(uint32_t sceneCode);
@@ -314,8 +314,8 @@ namespace ui {
 		typedef std::function<void(AppManager*)> oe_t;
 
 		obc_t obc = [](AppManager* self, uint32_t, sf::Vector2f) { self->Unblock(); };
-		oke_t oke = [](AppManager* self, uint32_t) { };
-		oss_t oss = [](AppManager* self, uint32_t) { };
+		oke_t oke = [](AppManager*, uint32_t) { };
+		oss_t oss = [](AppManager*, uint32_t) { };
 		oe_t oe = [](AppManager* self) { self->Close(); };
 
 		void SwitchScene(uint32_t sceneId);

@@ -10,6 +10,7 @@ std::vector<sf::Vector2i> Board::PossibleMoves(const uint8_t& x, const uint8_t& 
 	switch (MASKF & figure) {
 		case NONE: break;
 		case ROOK:
+			//ЧТО ЭТО ЗА CTRL+C/V?
 			for (int i = x - 1; i >= 0; i--) {
 				if ((MASKF & map[GetField(i, y)]) == NONE) ans.emplace_back(sf::Vector2i(i, y));
 				else {
@@ -168,6 +169,10 @@ std::vector<sf::Vector2i> Board::PossibleMoves(const uint8_t& x, const uint8_t& 
 			}
 			break;
 		case KNIGHT: if (x - 2 >= 0 && y + 1 <= 7 && (MASKC & map[GetField(x - 2, y + 1)]) != (MASKC & figure)) ans.emplace_back(sf::Vector2i(x - 2, y + 1));
+		//emplace_back МОЖНО ПЕРЕДАТЬ ПРОСТО АРГУМЕНТЫ КОНСТРУКТОРА, СООТВЕТСТВУЮЩЕМУ ТИПУ ДОБАВЛЯЕМОГО ОБЪЕКТА
+		//ПОЭТОМУ ПРОСТО ИСПОЛЬЗУЙ push_back
+		//А ДЛЯ ПРОВЕРКИ ПРИНАДЛЕЖНОСТИ КЛЕТКИ ДОСКЕ МОЖНО ИСПОЛЬЗОВАТЬ МЕТОД cm::Valid() ИЗ utils
+		//И ОПЯТЬ ЖЕ - НАПИШИ МЕТОДЫ ТИПА IsOpponentOrFree(Figure maybeOpponent, Figure currentFigure) И Т.П. ЧТОБЫ НЕ БЫЛО ЛОГИЧЕСКИХ ОШИБОК
 			if (x - 2 >= 0 && y - 1 >= 0 && (MASKC & map[GetField(x - 2, y - 1)]) != (MASKC & figure)) ans.emplace_back(sf::Vector2i(x - 2, y - 1));
 			if (x - 1 >= 0 && y + 2 <= 7 && (MASKC & map[GetField(x - 1, y + 2)]) != (MASKC & figure)) ans.emplace_back(sf::Vector2i(x - 1, y + 2));
 			if (x - 1 >= 0 && y - 2 >= 0 && (MASKC & map[GetField(x - 1, y - 2)]) != (MASKC & figure)) ans.emplace_back(sf::Vector2i(x - 1, y - 2));
@@ -223,12 +228,14 @@ std::vector<sf::Vector2i> Board::PossibleCastlings(const uint8_t& x, const uint8
 			if ((MASKC & figure) == WHITE && white_king) {
 				std::set<std::pair<int, int>> attacked = GetAttackedFields();
 				// короткая рокировка
+				// ЗНАК "\" НУЖЕН ТОЛЬКО ДЛЯ МАКРОСОВ
 				if (attacked.find({4, 0}) == attacked.end() && attacked.find({5, 0}) == attacked.end() && \
                 attacked.find({6, 0}) == attacked.end() && (MASKF & map[GetField(5, 0)]) == NONE && \
                 (MASKF & map[GetField(6, 0)]) == NONE) {
 					ans.emplace_back(sf::Vector2i(6, 0));
 				}
 				// длинная рокировка
+				// НАПИШИ МЕТОДЫ ТИПА static bool IsSpace(Figure) И ПОДОБНЫЕ, ЧТОБЫ НЕ ПУТАТЬСЯ В МАСКАХ
 				if (attacked.find({2, 0}) == attacked.end() && \
                 attacked.find({3, 0}) == attacked.end() && attacked.find({4, 0}) == attacked.end() && \
                 (MASKF & map[GetField(3, 0)]) == NONE && \
@@ -266,6 +273,7 @@ std::vector<sf::Vector2i> Board::PossibleTOA(const uint8_t& x, const uint8_t& y)
 }
 
 std::set<std::pair<int, int>> Board::GetAttackedFields() {
+	//ОПЯТЬ ЖЕ, sf::Vector
 	std::set<std::pair<int, int>> attacked;
 	Figure side;
 	if (state == WHITE_TURN) side = figures::WHITE;
@@ -285,6 +293,7 @@ void Board::PlayStep(Step s) {
 	if (state == WHITE_TURN) state = BLACK_TURN;
 	else if (state == BLACK_TURN) state = WHITE_TURN;
 	// обычный ход
+	// ЗАЧЕМ ХРАНИТЬ ТИП ХОДА?
 	if (!s.type) {
 		Figure moved = map[GetField(s.parts[0].from.x, s.parts[0].from.y)];
 		map[GetField(s.parts[0].from.x, s.parts[0].from.y)] = figures::NONE;
@@ -299,6 +308,7 @@ void Board::UndoStep() {
 	else if (state == BLACK_TURN) state = WHITE_TURN;
 	if (!s.type) {
 		Figure moved = map[GetField(s.parts[0].to.x, s.parts[0].to.y)];
+		//НАПИШИ МЕТОД At, НО ПРИНИМАЮЩИЙ sf::Vector, СТАРЫЙ УБИРАТЬ НЕ НАДО, ИНОГДА ПЕРЕДАВАТЬ ОТДЕЛЬНО КООРДИНАТЫ КОРОЧЕ, А ИНОГДА НЕТ
 		map[GetField(s.parts[0].from.x, s.parts[0].from.y)] = moved;
 		map[GetField(s.parts[0].to.x, s.parts[0].to.y)] = s.parts[0].f;
 		return;
@@ -314,6 +324,7 @@ uint8_t Board::GetField(uint8_t rank, uint8_t file) {
 }
 
 Figure Board::GetState() {
+	// ПОЧЕМУ ЭТОТ МЕТОД ВОЗВРАЩАЕТ Figure, НО НАЗЫВАЕТСЯ GetState? ПОЧЕМУ НЕ GetActiveFigureMask ИЛИ ТИПА ТОГО?
 	if (state == WHITE_TURN) return figures::WHITE;
 	return figures::BLACK;
 }
@@ -326,6 +337,7 @@ Board::Board(type t) {
 			break;
 		}
 		case DEFAULT: {
+			// std::vector<Figure> ЛИШНИЙ РАЗ ПИСАТЬ НЕ НАДО
 			map = std::vector<Figure>{
 					WHITE | ROOK, WHITE | KNIGHT, WHITE | BISHOP, WHITE | QUEEN,
 					WHITE | KING, WHITE | BISHOP, WHITE | KNIGHT, WHITE | ROOK,
@@ -397,6 +409,7 @@ void Board::Reset(){
 	story.clear();
 	state = WHITE_TURN;
 	using namespace figures;
+	//ТА ЖЕ  ОШИБКА
 	map = std::vector<Figure>{
 			WHITE | ROOK, WHITE | KNIGHT, WHITE | BISHOP, WHITE | QUEEN,
 			WHITE | KING, WHITE | BISHOP, WHITE | KNIGHT, WHITE | ROOK,
@@ -411,5 +424,6 @@ void Board::Reset(){
 			BLACK | ROOK, BLACK | KNIGHT, BLACK | BISHOP, BLACK | QUEEN,
 			BLACK | KING, BLACK | BISHOP, BLACK | KNIGHT, BLACK | ROOK
 	};
+	//ВООБЩЕ, В КОНСТРУКТОРЕ МОЖНО ПРОСТО ВЫЗЫВАТЬ Reset и не дублировать код.
 }
 

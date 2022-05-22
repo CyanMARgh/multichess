@@ -55,11 +55,11 @@ namespace ui {
 	void Element::Reshape(sf::Vector2f parentSizeOrigin, sf::Vector2f parentBoxScaled) {
 		Reshape({{0, 0}, parentSizeOrigin}, {{0, 0}, parentBoxScaled});
 	}
-	int Element::OnMouseEvent(MouseEvent event, sf::Vector2f pos) {
+	int Element::OnMouseEvent(MouseEvent, sf::Vector2f) {
 		return NO_HIT;
 	}
-	void Element::Draw(Window* w) { }
-	Element::Element(Box2 zone, ScaleMode sm) :boxOrigin(zone), boxScaled(zone), sm(sm) {
+	void Element::Draw(Window*) { }
+	Element::Element(Box2 zone, ScaleMode sm) :sm(sm), boxOrigin(zone), boxScaled(zone) {
 		visible = false, clickable = false, fresh = false, pressed = false;
 	}
 
